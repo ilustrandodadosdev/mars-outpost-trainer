@@ -6,7 +6,9 @@ A browser game where students run a Martian outpost, balancing power, food, oxyg
 Every sol in the game is one real day of NASA's space weather record: the solar flares the player faces really happened.
 
 ## Play
-Open `index.html` through any static web server (no install, no build step):
+**Online:** https://ilustrandodadosdev.github.io/mars-outpost-trainer/
+
+Or locally, open `index.html` through any static web server (no install, no build step):
 
 ```bash
 python -m http.server 8765
