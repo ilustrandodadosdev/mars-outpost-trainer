@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { BARRAS, MODULOS, estadoInicial, podeConstruir, construir, avancarSol } from './regras.js';
+import { BARRAS, MODULOS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual } from './regras.js';
 import { carregarClimaEspacial, montarCalendario } from './donki.js';
 
 // ---------- Cena ----------
@@ -157,9 +157,28 @@ function atualizarHUD() {
   }
   document.getElementById('sol').textContent = `Sol ${Math.min(estado.sol, 30)}`;
   const data = calendario.dataDoSol ? calendario.dataDoSol(estado.sol) : null;
-  document.getElementById('clima').textContent = fonteClima
-    ? `Real space weather for ${data} · ${fonteClima}`
-    : 'NASA space weather unavailable right now (add your api.nasa.gov key in src/config.js)';
+  document.getElementById('clima').textContent = !fonteClima ? 'Loading NASA space weather…'
+    : data ? `Real space weather for ${data} · ${fonteClima}`
+    : `Space weather: ${fonteClima}`;
+
+  // aviso de tempestade + abrigo
+  const elAviso = document.getElementById('aviso');
+  const proxima = [...estado.alertas].sort((a, b) => a.chega - b.chega)[0];
+  const pct = Math.round(protecaoAtual(estado) * 100);
+  if (estado.fim) elAviso.hidden = true;
+  else if (proxima) {
+    const faltam = proxima.chega - estado.sol;
+    elAviso.hidden = false;
+    elAviso.classList.remove('calmo');
+    document.getElementById('aviso-texto').innerHTML =
+      `⚠️ <b>${proxima.flare.classe}</b> solar storm ${faltam === 0 ? '<b>hits at the end of this sol</b>' : `hits in <b>${faltam + 1} sols</b>`}. ` +
+      (estado.abrigo ? `Crew in shelter · ${pct}% protected.` : `Crew outside · ${pct}% protected.`);
+  } else if (estado.abrigo) {
+    elAviso.hidden = false;
+    elAviso.classList.add('calmo');
+    document.getElementById('aviso-texto').textContent = `Crew in shelter (${pct}% protected). Greenhouse is unattended.`;
+  } else elAviso.hidden = true;
+  document.getElementById('abrigo').textContent = estado.abrigo ? 'Leave shelter' : 'Take shelter';
   for (const btn of elModulos.querySelectorAll('button')) {
     btn.disabled = !podeConstruir(estado, btn.dataset.id);
     btn.setAttribute('aria-pressed', String(btn.dataset.id === selecionado));
@@ -237,13 +256,31 @@ document.getElementById('proximo').addEventListener('click', () => {
   const solAtual = estado.sol;
   const flares = calendario.porSol(solAtual);
   const eventos = avancarSol(estado, flares);
+  const origem = f => f.simulado ? '(simulated)'
+    : `recorded by NASA on ${f.data}${f.link ? ` · <a href="${f.link}" target="_blank" rel="noopener">source</a>` : ''}`;
   for (const ev of eventos) {
-    registrar(`☀️ Sol ${solAtual}: real <b>${ev.flare.classe}</b> solar flare recorded by NASA on ${ev.flare.data} — dose +${ev.dose.toFixed(1)}. ${ev.flare.link ? `<a href="${ev.flare.link}" target="_blank" rel="noopener">source</a>` : ''}`, true);
-    flash.intensity = Math.max(flash.intensity, ev.flare.classe[0] === 'X' ? 3 : 1.5);
+    if (ev.tipo === 'aviso') {
+      registrar(`☀️ Sol ${solAtual}: <b>${ev.flare.classe}</b> flare seen ${origem(ev.flare)}. Particle storm on the way!`, true);
+      flash.color.set(0xfff2a8);
+      flash.intensity = Math.max(flash.intensity, ev.flare.classe[0] === 'X' ? 3 : 1.6);
+    } else if (ev.tipo === 'tempestade') {
+      registrar(`🌩️ Sol ${solAtual}: storm hit the outpost — dose +${ev.dose.toFixed(1)} (${Math.round(ev.protecao * 100)}% protected${ev.abrigo ? ', in shelter' : ''}).`, true);
+      flash.color.set(0xff5030);
+      flash.intensity = 3;
+    } else if (ev.tipo === 'menor') {
+      registrar(`Sol ${solAtual}: minor <b>${ev.flare.classe}</b> flare ${origem(ev.flare)} — no storm.`);
+    }
   }
   if (!eventos.length) registrar(`Sol ${solAtual}: quiet sun.`);
   atualizarHUD();
   if (estado.fim) mostrarFim();
+});
+
+document.getElementById('abrigo').addEventListener('click', () => {
+  if (estado.fim) return;
+  estado.abrigo = !estado.abrigo;
+  registrar(estado.abrigo ? '🛡️ Crew moved to the storm shelter. Greenhouse left unattended.' : 'Crew left the shelter.');
+  atualizarHUD();
 });
 
 function mostrarFim() {
@@ -285,6 +322,7 @@ atualizarHUD();
 carregarClimaEspacial().then(clima => {
   fonteClima = clima.fonte;
   calendario = montarCalendario(clima);
-  if (fonteClima) registrar(`Loaded ${clima.flares.length} real solar flares (${fonteClima}). Each sol = one real day starting ${calendario.inicio}.`);
+  if (clima.simulado) registrar('⚠️ NASA data not loaded: solar storms are SIMULATED in this run.', true);
+  else registrar(`Loaded ${clima.flares.length} real solar flares (${fonteClima}). Each sol = one real day starting ${calendario.inicio}.`);
   atualizarHUD();
 });

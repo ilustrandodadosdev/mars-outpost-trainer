@@ -1,6 +1,6 @@
 // ⚠️ PROVISÓRIO — números técnicos só para o esqueleto rodar.
-// As regras do jogo (o que custa quanto, como se ganha/perde, qual o momento de tensão)
-// são decisão do Rogenrique: anotar em IDEIA.md e trocar aqui.
+// Decidido pelo Rogenrique: o momento de tensão é a TEMPESTADE SOLAR (ver IDEIA.md).
+// O resto (valores, vitória/derrota) ainda é decisão dele: anotar em IDEIA.md e trocar aqui.
 
 export const BARRAS = [
   { id: 'energia',   nome: 'Power',     ruimAlto: false },
@@ -12,20 +12,24 @@ export const BARRAS = [
 export const MODULOS = {
   habitat: { nome: 'Habitat',     resumo: 'O₂ +4 · power −3',            custo: 20, efeito: { oxigenio: +4, energia: -3 } },
   solar:   { nome: 'Solar panel', resumo: 'power +8',                    custo: 6,  efeito: { energia: +8 } },
-  estufa:  { nome: 'Greenhouse',  resumo: 'food +5 · O₂ +2 · power −4',  custo: 15, efeito: { comida: +5, oxigenio: +2, energia: -4 } },
+  estufa:  { nome: 'Greenhouse',  resumo: 'food +5 · O₂ +2 · power −4',  custo: 15, efeito: { comida: +5, oxigenio: +2, energia: -4 }, paraNoAbrigo: true },
   escudo:  { nome: 'Shield',      resumo: 'blocks radiation',            custo: 10, efeito: { blindagem: 1 } },
 };
 
 export const REGRAS = {
   solsParaVencer: 30,
   consumoPorSol: { comida: 4, oxigenio: 4 },
-  radiacaoDeFundo: 0.6,                       // dose acumulada por sol, sem tempestade
-  doseFlare: { X: 14, M: 5, C: 1 },           // classe da explosão solar real → dose
-  protecaoPorEscudo: 0.2,                     // cada escudo corta 20% (máx. 80%)
+  radiacaoDeFundo: 0.6,                    // dose por sol, sol calmo
+  doseTempestade: { X: 14, M: 5 },         // classe da explosão → dose da tempestade de partículas (× magnitude, até 3×)
+  atrasoSols: { X: 1, M: 2 },              // simplificação: a luz da explosão chega na hora, as partículas depois
+  protecaoPorEscudo: 0.1,
+  protecaoMaxForaDoAbrigo: 0.4,
+  protecaoAbrigoBase: 0.5,
+  protecaoMaxNoAbrigo: 0.9,
 };
 
 export function estadoInicial() {
-  return { sol: 1, energia: 60, comida: 40, oxigenio: 40, radiacao: 0, modulos: [], fim: null };
+  return { sol: 1, energia: 60, comida: 40, oxigenio: 40, radiacao: 0, modulos: [], alertas: [], abrigo: false, fim: null };
 }
 
 const limitar = v => Math.max(0, Math.min(100, v));
@@ -39,35 +43,54 @@ export function construir(estado, tipo, x, z) {
   estado.modulos.push({ tipo, x, z });
 }
 
-export function doseDoFlare(classe) {
-  if (!classe) return 0;
-  const base = REGRAS.doseFlare[classe[0]] ?? 0;
+export function doseDaTempestade(classe) {
+  const base = REGRAS.doseTempestade[classe?.[0]] ?? 0;
   const fator = parseFloat(classe.slice(1)) || 1;   // ex.: M2.4 → 2.4
-  return base * Math.min(fator, 3);
+  return base * Math.min(Math.max(fator, 1), 3);
 }
 
-// Avança um sol. `flares` = explosões solares REAIS registradas pela NASA no dia que corresponde a este sol.
+export function protecaoAtual(estado) {
+  const escudos = estado.modulos.filter(m => m.tipo === 'escudo').length;
+  return estado.abrigo
+    ? Math.min(REGRAS.protecaoMaxNoAbrigo, REGRAS.protecaoAbrigoBase + escudos * REGRAS.protecaoPorEscudo)
+    : Math.min(REGRAS.protecaoMaxForaDoAbrigo, escudos * REGRAS.protecaoPorEscudo);
+}
+
+// Avança um sol. `flares` = explosões solares vistas neste sol (reais do NASA DONKI, ou simuladas se não houver dado).
 export function avancarSol(estado, flares = []) {
   const eventos = [];
+  const sol = estado.sol;
+
+  // 1) produção e consumo (no abrigo, a estufa fica sem cuidado)
   const soma = { energia: 0, comida: 0, oxigenio: 0 };
-  let blindagem = 0;
   for (const m of estado.modulos) {
-    for (const [k, v] of Object.entries(MODULOS[m.tipo].efeito)) {
-      if (k === 'blindagem') blindagem += v; else soma[k] += v;
-    }
+    const mod = MODULOS[m.tipo];
+    if (estado.abrigo && mod.paraNoAbrigo) continue;
+    for (const [k, v] of Object.entries(mod.efeito)) if (k in soma) soma[k] += v;
   }
   estado.energia  = limitar(estado.energia + soma.energia);
   estado.comida   = limitar(estado.comida + soma.comida - REGRAS.consumoPorSol.comida);
   estado.oxigenio = limitar(estado.oxigenio + soma.oxigenio - REGRAS.consumoPorSol.oxigenio);
 
-  const protecao = Math.min(0.8, blindagem * REGRAS.protecaoPorEscudo);
-  let dose = REGRAS.radiacaoDeFundo;
-  for (const f of flares) {
-    const d = doseDoFlare(f.classe);
+  // 2) tempestades de partículas que chegam hoje
+  const protecao = protecaoAtual(estado);
+  let dose = REGRAS.radiacaoDeFundo * (1 - protecao);
+  for (const a of estado.alertas.filter(a => a.chega === sol)) {
+    const d = a.dose * (1 - protecao);
     dose += d;
-    if (d > 0) eventos.push({ tipo: 'flare', flare: f, dose: d * (1 - protecao) });
+    eventos.push({ tipo: 'tempestade', flare: a.flare, dose: d, abrigo: estado.abrigo, protecao });
   }
-  estado.radiacao = limitar(estado.radiacao + dose * (1 - protecao));
+  estado.alertas = estado.alertas.filter(a => a.chega > sol);
+  estado.radiacao = limitar(estado.radiacao + dose);
+
+  // 3) explosões vistas hoje → aviso de tempestade a caminho
+  for (const f of flares) {
+    const classe = f.classe?.[0];
+    if (!(classe in REGRAS.atrasoSols)) { eventos.push({ tipo: 'menor', flare: f }); continue; }
+    const chega = sol + REGRAS.atrasoSols[classe];  // atinge no fim desse sol
+    estado.alertas.push({ chega, dose: doseDaTempestade(f.classe), flare: f });
+    eventos.push({ tipo: 'aviso', flare: f, chega });
+  }
 
   estado.sol += 1;
   if (estado.comida <= 0) estado.fim = { venceu: false, motivo: 'The crew ran out of food.' };
