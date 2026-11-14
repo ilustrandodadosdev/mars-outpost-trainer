@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mars Outpost Trainer</title>
+<link rel="stylesheet" href="src/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="cena"></div>
+
+<header class="hud topo">
+  <div>
+    <h1>Mars Outpost Trainer <small>working title</small></h1>
+    <div id="sol" class="sol">Sol 1</div>
+    <div id="clima" class="clima">Loading NASA space weather…</div>
+  </div>
+  <div id="barras" class="barras"></div>
+</header>
+
+<aside id="registro" class="hud registro" aria-live="polite"></aside>
+
+<footer class="hud base">
+  <div id="modulos" class="modulos"></div>
+  <button id="proximo" class="proximo">Next sol ▶</button>
+</footer>
+
+<div id="dica" class="dica" hidden></div>
+<div id="fim" class="fim" hidden><div class="caixa"><h2 id="fim-titulo"></h2><p id="fim-texto"></p><button id="reiniciar">Play again</button></div></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

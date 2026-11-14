@@ -1,0 +1,61 @@
+:root {
+  --fundo: rgba(24, 14, 10, .78);
+  --borda: rgba(255, 210, 170, .18);
+  --texto: #fbeee3;
+  --suave: #d8b8a2;
+  --acento: #ff8a4c;
+  --ok: #7fd18b;
+  --ruim: #ff5f56;
+  font-family: system-ui, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #2a140c; color: var(--texto); }
+#cena { position: fixed; inset: 0; }
+#cena canvas { display: block; }
+
+.hud { position: fixed; z-index: 2; pointer-events: none; }
+.hud > * { pointer-events: auto; }
+
+.topo { top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.topo > div:first-child { background: var(--fundo); border: 1px solid var(--borda); border-radius: 12px; padding: 10px 14px; backdrop-filter: blur(6px); }
+h1 { font-size: 18px; margin: 0; letter-spacing: .02em; }
+h1 small { font-size: 11px; color: var(--suave); font-weight: 400; margin-left: 6px; }
+.sol { font-size: 28px; font-weight: 700; margin-top: 2px; }
+.clima { font-size: 12px; color: var(--suave); max-width: 340px; }
+
+.barras { background: var(--fundo); border: 1px solid var(--borda); border-radius: 12px; padding: 10px 14px; min-width: 240px; backdrop-filter: blur(6px); }
+.barra { display: grid; grid-template-columns: 92px 1fr 34px; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; }
+.barra .trilho { height: 10px; background: rgba(255,255,255,.12); border-radius: 6px; overflow: hidden; }
+.barra .cheio { height: 100%; border-radius: 6px; transition: width .4s ease, background .4s; }
+.barra .valor { text-align: right; font-variant-numeric: tabular-nums; }
+
+.registro { right: 12px; bottom: 96px; width: 300px; max-height: 38vh; overflow: auto; background: var(--fundo); border: 1px solid var(--borda); border-radius: 12px; padding: 8px 12px; font-size: 12px; backdrop-filter: blur(6px); }
+.registro p { margin: 6px 0; line-height: 1.35; }
+.registro p.alerta { color: #ffb38a; }
+.registro a { color: var(--acento); }
+
+.base { left: 12px; right: 12px; bottom: 12px; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.modulos { display: flex; gap: 8px; flex-wrap: wrap; }
+.modulos button, .proximo, .fim button {
+  font: inherit; color: var(--texto); background: var(--fundo); border: 1px solid var(--borda);
+  border-radius: 12px; padding: 10px 14px; cursor: pointer; backdrop-filter: blur(6px);
+}
+.modulos button { min-width: 112px; text-align: left; }
+.modulos button b { display: block; font-size: 14px; }
+.modulos button span { font-size: 11px; color: var(--suave); }
+.modulos button[aria-pressed="true"] { border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento) inset; }
+.modulos button:disabled { opacity: .45; cursor: not-allowed; }
+.proximo { background: var(--acento); color: #25120a; font-weight: 700; font-size: 16px; padding: 14px 22px; border: 0; }
+.proximo:disabled { opacity: .5; }
+
+.dica { position: fixed; z-index: 3; pointer-events: none; background: var(--fundo); border: 1px solid var(--borda); border-radius: 8px; padding: 6px 9px; font-size: 12px; transform: translate(12px, 12px); }
+.fim { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(0,0,0,.55); }
+.fim[hidden], .dica[hidden] { display: none; }
+.fim .caixa { background: #24130c; border: 1px solid var(--borda); border-radius: 16px; padding: 24px 28px; max-width: 420px; text-align: center; }
+.fim h2 { margin: 0 0 8px; }
+
+@media (max-width: 640px) {
+  .registro { display: none; }
+  .modulos button { min-width: 0; padding: 8px 10px; }
+  .barras { min-width: 0; width: 100%; }
+}
