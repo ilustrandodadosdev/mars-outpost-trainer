@@ -1,3 +1,4 @@
+// Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 // Céu e solo da versão realista. Tudo é gerado no navegador: nenhuma imagem externa.
 import * as THREE from 'three';
 

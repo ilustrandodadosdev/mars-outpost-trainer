@@ -1,3 +1,4 @@
+// Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 // Regras do jogo. Decisões de design do Rogenrique em IDEIA.md (tempestade solar, vitória no sol 30).
 // Os números de equilíbrio (custos, produção, doses do jogo) são ajuste de jogabilidade, não medidas reais.
 // Os nomes e resumos dos módulos ficam em textos.js (inglês e português).

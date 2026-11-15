@@ -1,3 +1,4 @@
+// Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 // Textos do jogo em inglês e português. t('chave', {vars}) devolve o texto no idioma atual.
 const T = {
   en: {

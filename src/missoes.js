@@ -1,3 +1,4 @@
+// Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 // Missões jogáveis: cada uma põe a base ao lado de um rover real, no relevo real do local dele.
 // O clima espacial (tempestades da NASA, abr–mai 2024) vale para Marte inteiro, então é o mesmo nas duas.
 export const MISSOES = {

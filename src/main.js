@@ -1,3 +1,4 @@
+// Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual, avaliarMetas, METAS } from './regras.js';

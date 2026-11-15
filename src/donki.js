@@ -1,3 +1,4 @@
+// Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 // Clima espacial REAL da missão: NASA DONKI (Space Weather Database Of Notifications, Knowledge, Information).
 // dados/marte-2024.json é gerado por scripts/montar_dados.py a partir das previsões do modelo WSA-Enlil
 // da NASA para CMEs que atingiriam Marte (21/04 a 20/05/2024) + o evento de 20/05/2024 medido pelo Curiosity.
