@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- pinça/zoom da página desligado: no jogo, pinça e rolagem aproximam a câmera (sem isso o HUD amplia e sai da tela) -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Mars Outpost Trainer</title>
 <link rel="stylesheet" href="src/style.css">
 <script type="importmap">
@@ -17,7 +18,8 @@
 
 <header class="hud topo">
   <div>
-    <h1>Mars Outpost Trainer <small id="local"></small> <button id="idioma" class="idioma"></button> <button id="som" class="idioma" hidden></button></h1>
+    <h1><span class="nome">Mars Outpost Trainer</span> <small id="local"></small>
+      <span class="botoes"><button id="ajuda" class="idioma"></button><button id="idioma" class="idioma"></button><button id="som" class="idioma" hidden></button></span></h1>
     <div id="sol" class="sol">Sol 1</div>
     <div id="clima" class="clima"></div>
   </div>
@@ -29,12 +31,31 @@
   <button id="abrigo"></button>
 </div>
 
-<aside id="registro" class="hud registro" aria-live="polite"></aside>
+<section id="diario" class="hud diario">
+  <button id="diario-btn" class="diario-btn" aria-expanded="true" aria-controls="registro"></button>
+  <div id="registro" class="registro" aria-live="polite"></div>
+</section>
 
-<footer class="hud base">
+<footer id="base" class="hud base">
+  <p id="acao" class="acao"></p>
   <div id="modulos" class="modulos"></div>
   <button id="proximo" class="proximo"></button>
 </footer>
+
+<div id="tutorial" class="tutorial" hidden>
+  <div id="realce" class="realce"></div>
+  <div id="balao" class="balao" role="dialog" aria-modal="true" aria-labelledby="tut-titulo">
+    <small id="tut-passo"></small>
+    <h2 id="tut-titulo"></h2>
+    <div id="tut-texto"></div>
+    <div class="tut-botoes">
+      <button id="tut-pular" class="secundario"></button>
+      <span></span>
+      <button id="tut-voltar" class="secundario"></button>
+      <button id="tut-proximo"></button>
+    </div>
+  </div>
+</div>
 
 <div id="dica" class="dica" hidden></div>
 <div id="fim" class="fim" hidden>

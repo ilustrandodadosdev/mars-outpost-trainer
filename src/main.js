@@ -6,6 +6,12 @@ import { t, trocarIdioma, idioma, fontes, definirMissao } from './textos.js';
 import { MISSOES, missaoDaURL } from './missoes.js';
 import { criarCeu, criarTexturasSolo, criarClima, CORES_CEU, POEIRA_ESTACAO } from './visual.js';
 
+// ---------- Sem zoom da página ----------
+// Pinça no touchpad (Ctrl+roda) ou na tela ampliava a página inteira e o HUD saía da tela.
+// No jogo, pinça e roda só aproximam a câmera (o OrbitControls continua recebendo o evento).
+addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+for (const tipo of ['gesturestart', 'gesturechange', 'gestureend']) addEventListener(tipo, e => e.preventDefault());
+
 // ---------- Escolha da missão (Curiosity em Gale ou Perseverance em Jezero) ----------
 // ?missao=... na URL pula a tela (dá para mandar o link direto de uma missão).
 function escolherMissao() {
@@ -270,7 +276,12 @@ const elModulos = document.getElementById('modulos');
 function montarTextosFixos() {
   document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'en';
   elBarras.innerHTML = BARRAS.map(b => `<div class="barra" data-id="${b.id}"><span>${t(b.id)}</span><div class="trilho"><div class="cheio"></div></div><span class="valor"></span></div>`).join('');
-  elModulos.innerHTML = Object.entries(MODULOS).map(([id, m]) => `<button data-id="${id}" aria-pressed="false"><b>${t(id)}</b><span>${t('custo', { n: m.custo })} · ${t(id + '_r')}</span></button>`).join('');
+  // telas pequenas mostram só "⚡ custo" (.curto); o efeito completo fica na dica da ação e no title
+  elModulos.innerHTML = Object.entries(MODULOS).map(([id, m]) => `<button data-id="${id}" aria-pressed="false" title="${t(id)} · ${t('custo', { n: m.custo })} · ${t(id + '_r')}"><b>${t(id)}</b><span class="longo">${t('custo', { n: m.custo })} · ${t(id + '_r')}</span><span class="curto">⚡ ${m.custo}</span></button>`).join('');
+  const elAjuda = document.getElementById('ajuda');
+  elAjuda.textContent = t('ajuda');
+  elAjuda.title = elAjuda.ariaLabel = t('ajudaTitulo');
+  desenharBotaoDiario();
   const elIdioma = document.getElementById('idioma');
   elIdioma.textContent = t('idioma');
   elIdioma.title = t('idiomaTitulo');
@@ -302,9 +313,37 @@ document.getElementById('som').addEventListener('click', () => {
   if (somLigado) tocarSom(); else audio?.pause();
   montarTextosFixos();
 });
+// ---------- Diário (registro) recolhível: aberto em telas grandes, fechado no celular ----------
+const elDiario = document.getElementById('diario');
+const elDiarioBtn = document.getElementById('diario-btn');
+let naoLidas = 0;
+function telaPequena() { return innerWidth <= 640 || innerHeight <= 520; }
+function abrirDiario(aberto) {
+  elDiario.classList.toggle('fechado', !aberto);
+  elDiarioBtn.setAttribute('aria-expanded', String(aberto));
+  if (aberto) naoLidas = 0;
+  desenharBotaoDiario();
+}
+function desenharBotaoDiario() {
+  const aberto = !elDiario.classList.contains('fechado');
+  elDiarioBtn.innerHTML = `${t('diario')} ${aberto ? '▾' : '▸'}` + (!aberto && naoLidas ? `<span class="novo">${naoLidas}</span>` : '');
+}
+elDiarioBtn.addEventListener('click', () => abrirDiario(elDiario.classList.contains('fechado')));
+elDiario.classList.toggle('fechado', telaPequena());
+elDiarioBtn.setAttribute('aria-expanded', String(!telaPequena()));
+
 montarTextosFixos();
 const elRegistro = document.getElementById('registro');
 const elDica = document.getElementById('dica');
+
+// O topo e a base mudam de altura conforme a tela: o diário e o aviso se encaixam no espaço que sobra.
+const raiz = document.documentElement.style;
+const medir = new ResizeObserver(() => {
+  raiz.setProperty('--base-h', document.getElementById('base').offsetHeight + 'px');
+  raiz.setProperty('--topo-h', document.querySelector('.topo').offsetHeight + 'px');
+});
+medir.observe(document.getElementById('base'));
+medir.observe(document.querySelector('.topo'));
 
 // Cada entrada guarda uma função que gera o texto no idioma atual,
 // para o registro inteiro ser redesenhado quando o jogador troca de idioma.
@@ -319,6 +358,7 @@ function registrar(texto, alerta = false) {
   const e = { texto, alerta };
   entradas.push(e);
   desenharEntrada(e);
+  if (elDiario.classList.contains('fechado')) { naoLidas++; desenharBotaoDiario(); }
 }
 function redesenharRegistro() {
   elRegistro.innerHTML = '';
@@ -341,10 +381,19 @@ function atualizarHUD() {
   }
   document.getElementById('sol').textContent = t('sol', { n: Math.min(estado.sol, 30) });
   const data = calendario.dataDoSol ? calendario.dataDoSol(estado.sol) : null;
-  document.getElementById('clima').textContent = climaSimulado ? t('clima', { fonte: t('fonteSimulada') })
+  // linha curta no HUD; a fonte completa fica no title (e nas fontes do debrief). Dado simulado continua escrito por extenso.
+  const elClima = document.getElementById('clima');
+  elClima.textContent = climaSimulado ? t('clima', { fonte: t('fonteSimulada') })
     : !fonteClima ? t('carregando')
-    : data ? t('climaReal', { data, fonte: t('fonteReal') })
-    : t('clima', { fonte: t('fonteReal') });
+    : data ? t('climaCurto', { data }) : t('climaCurtoSemData');
+  if (fonteClima && !climaSimulado) elClima.title = t('fonteReal'); else elClima.removeAttribute('title');
+
+  // dica da ação: o que fazer agora
+  const temEnergia = Object.keys(MODULOS).some(id => podeConstruir(estado, id));
+  document.getElementById('acao').innerHTML = estado.fim ? ''
+    : selecionado ? t('acaoEscolhido', { nome: t(selecionado), efeito: t(selecionado + '_r') })
+    : !temEnergia ? t('acaoSemEnergia')
+    : estado.modulos.length === 0 ? t('acaoNada') : '';
 
   // aviso de tempestade + abrigo
   const elAviso = document.getElementById('aviso');
@@ -560,7 +609,111 @@ carregarClimaEspacial().then(clima => {
   atualizarHUD();
 });
 
+// ---------- Tutorial guiado ----------
+// Abre sozinho na 1ª partida (fica lembrado no navegador) e volta pelo botão "?".
+// Os números vêm de regras.js, para o tutorial nunca contar uma regra diferente da do jogo.
+const PASSOS = [
+  { id: 1 },
+  { id: 2, alvo: '#barras' },
+  { id: 3, alvo: '#modulos' },
+  { id: 4 },
+  { id: 5, alvo: '#proximo' },
+  { id: 6, alvo: '#aviso' },            // destaca o aviso se ele estiver na tela; senão, balão no meio
+  { id: 7, alvo: '#diario-btn' },
+  { id: 8, alvo: '#ajuda' },
+];
+const elTut = document.getElementById('tutorial');
+const elRealce = document.getElementById('realce');
+const elBalao = document.getElementById('balao');
+let passoTut = 0;
+const pct = v => Math.round(v * 100);
+function textoPasso(id) {
+  const lista = '<ul>' + Object.entries(MODULOS).map(([m, d]) => t('tutModulo', {
+    nome: t(m), custo: d.custo, efeito: m === 'escudo' ? `${t('escudo_r')} (+${pct(REGRAS.protecaoPorEscudo)}%)` : t(m + '_r'),
+  })).join('') + '</ul>';
+  return t('tut' + id, {
+    sols: REGRAS.solsParaVencer, comida: REGRAS.consumoPorSol.comida, o2: REGRAS.consumoPorSol.oxigenio, lista,
+    fora: pct(REGRAS.protecaoMaxForaDoAbrigo), base: pct(REGRAS.protecaoAbrigoBase), max: pct(REGRAS.protecaoMaxNoAbrigo), escudo: pct(REGRAS.protecaoPorEscudo),
+  });
+}
+function mostrarPasso() {
+  const p = PASSOS[passoTut], ultimo = passoTut === PASSOS.length - 1;
+  document.getElementById('tut-passo').textContent = t('tutPasso', { i: passoTut + 1, n: PASSOS.length });
+  document.getElementById('tut-titulo').textContent = t('tut' + p.id + 't');
+  document.getElementById('tut-texto').innerHTML = textoPasso(p.id);
+  document.getElementById('tut-pular').textContent = t('tutPular');
+  document.getElementById('tut-pular').hidden = ultimo;
+  document.getElementById('tut-voltar').textContent = t('tutVoltar');
+  document.getElementById('tut-voltar').hidden = passoTut === 0;
+  document.getElementById('tut-proximo').textContent = ultimo ? t('tutFim') : t('tutProximo') + ' ▶';
+  posicionarPasso();
+}
+function posicionarPasso() {
+  const p = PASSOS[passoTut];
+  const alvo = p.alvo && document.querySelector(p.alvo);
+  // getClientRects vazio = alvo escondido (offsetParent falha em elementos position:fixed, como o aviso)
+  const r = alvo && !alvo.closest('[hidden]') && alvo.getClientRects().length ? alvo.getBoundingClientRect() : null;
+  const W = innerWidth, H = innerHeight, m = 10, folga = 6;
+  const bw = elBalao.offsetWidth, bh = elBalao.offsetHeight;
+  let x, y;
+  if (r && r.width) {
+    elRealce.classList.remove('sem-alvo');
+    Object.assign(elRealce.style, { left: r.left - folga + 'px', top: r.top - folga + 'px', width: r.width + 2 * folga + 'px', height: r.height + 2 * folga + 'px' });
+    const baixo = H - r.bottom - folga, cima = r.top - folga;
+    const cabeBaixo = baixo >= bh + 2 * m, cabeCima = cima >= bh + 2 * m;
+    // alvo na metade de baixo: balão em cima, para não cobrir o que vem embaixo dele (ex.: o diário aberto)
+    if (cabeCima && (!cabeBaixo || r.top > H / 2)) y = r.top - folga - m - bh;
+    else if (cabeBaixo) y = r.bottom + folga + m;
+    else y = (H - bh) / 2;
+    x = r.left + r.width / 2 - bw / 2;
+    // sem espaço em cima nem embaixo: balão ao lado do alvo
+    if (baixo < bh + 2 * m && cima < bh + 2 * m) x = r.left > W - r.right ? r.left - folga - m - bw : r.right + folga + m;
+  } else {
+    elRealce.classList.add('sem-alvo');
+    Object.assign(elRealce.style, { left: W / 2 + 'px', top: H / 2 + 'px', width: '0px', height: '0px' });
+    x = (W - bw) / 2; y = (H - bh) / 2;
+  }
+  elBalao.style.left = Math.max(m, Math.min(W - bw - m, x)) + 'px';
+  elBalao.style.top = Math.max(m, Math.min(H - bh - m, y)) + 'px';
+}
+function abrirTutorial() {
+  selecionado = null; atualizarFantasma(); atualizarHUD();
+  elDica.hidden = true;
+  passoTut = 0;
+  elTut.hidden = false;
+  mostrarPasso();
+  document.getElementById('tut-proximo').focus();
+}
+function fecharTutorial() {
+  elTut.hidden = true;
+  try { localStorage.setItem('tutorialVisto', '1'); } catch {}
+}
+function irPasso(d) {
+  const n = passoTut + d;
+  if (n >= PASSOS.length) return fecharTutorial();
+  passoTut = Math.max(0, n);
+  mostrarPasso();
+}
+document.getElementById('tut-proximo').addEventListener('click', () => irPasso(1));
+document.getElementById('tut-voltar').addEventListener('click', () => irPasso(-1));
+document.getElementById('tut-pular').addEventListener('click', fecharTutorial);
+document.getElementById('ajuda').addEventListener('click', abrirTutorial);
+addEventListener('keydown', e => {
+  if (elTut.hidden) return;
+  if (e.key === 'Escape') fecharTutorial();
+  else if (e.key === 'ArrowRight') irPasso(1);
+  else if (e.key === 'ArrowLeft') irPasso(-1);
+});
+addEventListener('resize', () => { if (!elTut.hidden) posicionarPasso(); });
+{
+  const q = new URLSearchParams(location.search);
+  let visto = false;
+  try { visto = localStorage.getItem('tutorialVisto') === '1'; } catch {}
+  // ?tutorial=1 força abrir; a gravação da demo (?demo) não abre sozinha
+  if (q.get('tutorial') === '1' || (!visto && !q.has('demo'))) abrirTutorial();
+}
+
 // Só para gravar a demo (?demo na URL): expõe câmera e objetos ao script de captura.
 if (new URLSearchParams(location.search).has('demo')) {
-  window.__demo = { missao: MISSAO_ID, audio, THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y, clima, ceu };
+  window.__demo = { missao: MISSAO_ID, audio, THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y, clima, ceu, abrirTutorial };
 }

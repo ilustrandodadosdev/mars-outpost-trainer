@@ -120,3 +120,12 @@ O que não muda: dados reais do DONKI, regra de nunca apresentar dado simulado c
   - Fato novo no debrief: MOXIE fez 122 g de oxigênio (NASA, 2023).
 - **Curiosity / Gale:** sem som, e o debrief explica que o Curiosity não tem microfone.
 - O clima espacial (DONKI, abr–mai 2024) é o mesmo nas duas: tempestade solar atinge Marte inteiro. A dose de referência continua sendo a do RAD do Curiosity.
+
+## Tela que se adapta e tutorial guiado (15/11/2026)
+Pedido: "a escala do jogo na tela não está adaptada e as funcionalidades não estão claras".
+- **Escala:** o HUD inteiro é medido em rem, e a fonte base cresce com a tela (12 a 15 px; 11 px em tela baixa). Celular em pé: barras em 2×2, módulos em 4 colunas só com o custo (⚡), "Próximo sol" na largura toda. Celular deitado e notebook: módulos compactos.
+- **Zoom bloqueado:** pinça, Ctrl+roda e gestos do Safari não ampliam mais a página (era o que cortava o HUD no print). Ctrl+0 desfaz zoom que o Chrome já tenha guardado.
+- **Diário recolhível:** botão "📜 Diário da missão" com contador de mensagens novas; começa fechado em tela pequena.
+- **Dica de ação:** uma linha acima dos módulos diz o que fazer agora (escolher módulo, onde clicar, ou que falta energia).
+- **Tutorial de 8 passos:** objetivo, barras, módulos, radiação/abrigo, próximo sol, tempestades, diário, botão "?". Abre sozinho na primeira partida (lembrado no navegador), volta pelo "?", e aceita ←/→/Esc. Destaca cada parte da tela e os números vêm de regras.js, para o tutorial nunca contar uma regra diferente da do jogo. Avisa que os números do jogo são simplificados, não medidas reais.
+- Testado em 1366, 1920, celular em pé (390×844) e deitado (844×390), sem erro no console.
