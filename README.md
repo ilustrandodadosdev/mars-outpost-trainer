@@ -8,7 +8,7 @@ A browser game where students run a Martian outpost, balancing power, food, oxyg
 Every sol in the game is one real day, from 21 April to 20 May 2024: the solar storms the player faces are the ones NASA's models predicted would reach Mars in that window, and the final storm is the one Curiosity measured on 20 May 2024.
 
 ## Play
-**Online:** https://ilustrandodadosdev.github.io/mars-outpost-trainer/
+**Online:** https://mars-outpost-trainer.vercel.app
 
 Or locally, open `index.html` through any static web server (no install, no build step):
 
