@@ -96,3 +96,15 @@ O que não muda: dados reais do DONKI, regra de nunca apresentar dado simulado c
   - Mapa de sombra 2048 no PC e 1024 no celular.
 - **Solo:** textura de regolito e normal map gerados no navegador, sem baixar imagem (poeira, cascalho e pedrinhas). A textura é de 512 px no PC e 256 px no celular.
 - **Testado:** PC e celular sem erro de console; partida inteira em EN e PT.
+
+### Etapa 3 feita: poeira e clima (15/11/2026)
+- **Névoa da estação:** abril e maio de 2024 caem no verão do hemisfério sul de Marte, a estação mais empoeirada. Com a névoa, o horizonte some mais perto e o céu fica mais apagado.
+  - A fonte é Lemmon et al. (2024), o registro de opacidade do Curiosity.
+  - Não existe série diária pública desse mês, então o nível é fixo e **ilustrativo**, e a lista de fontes do jogo diz isso.
+- **Poeira no ar:** grãos levados pelo vento perto da câmera. É tudo na placa de vídeo, sem custo de CPU: 600 grãos no PC e 220 no celular.
+- **Redemoinhos (dust devils):** 3 no PC e 2 no celular, andando com o vento. Cada um vive de 25 a 45 s e depois nasce em outro lugar.
+  - O Curiosity filmou um em Gale (NASA/JPL PIA24039).
+  - Aqui o tamanho é de 10 a 30 m de largura e 150 a 400 m de altura, dentro da faixa vista em Marte.
+- **Céu:** a emenda que aparecia no horizonte foi corrigida.
+- **Fontes novas** na tela final: PIA19400, Lemmon et al. 2024, PIA24039.
+- **Testado:** PC e celular sem erro; partida inteira em EN e PT. Só os títulos das fontes ficam em inglês.

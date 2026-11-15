@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual } from './regras.js';
 import { carregarClimaEspacial, montarCalendario } from './donki.js';
 import { t, trocarIdioma, idioma, FONTES } from './textos.js';
-import { criarCeu, criarTexturasSolo, CORES_CEU } from './visual.js';
+import { criarCeu, criarTexturasSolo, criarClima, CORES_CEU, POEIRA_ESTACAO } from './visual.js';
 
 // ---------- Cena ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -19,8 +19,10 @@ const scene = new THREE.Scene();
 // Fim de tarde em Gale: Sol baixo a oeste-sudoeste, a ~22° do horizonte (sombras longas, halo azulado perto dele)
 const DIR_SOL = new THREE.Vector3(-0.8, 0.37, -0.45).normalize();
 scene.background = CORES_CEU.horizonte;
-scene.fog = new THREE.Fog(CORES_CEU.horizonte, 30, 95);
+// névoa de poeira da estação: quanto mais poeira, mais perto o horizonte some
+scene.fog = new THREE.Fog(CORES_CEU.horizonte, 30 - POEIRA_ESTACAO * 25, 95 - POEIRA_ESTACAO * 30);
 const ceu = criarCeu(DIR_SOL);
+ceu.material.uniforms.poeira.value = POEIRA_ESTACAO;
 scene.add(ceu);
 
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200);
@@ -211,6 +213,7 @@ curiosity.scale.setScalar(0.9);
 scene.add(curiosity);
 
 // ---------- MAVEN e Mars Odyssey: dois pontos de luz cruzando o céu ----------
+const clima = criarClima({ celular: CELULAR, alturaChao: altura, scene });
 const orbitadores = [0, 1].map(i => {
   const o = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }));
   // giram em volta da base, um pouco acima do horizonte (aparecem quando o jogador inclina a câmera)
@@ -453,7 +456,10 @@ addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+let antes = performance.now();
 renderer.setAnimationLoop(() => {
+  const agora = performance.now(), dt = Math.min(0.1, (agora - antes) / 1000);
+  antes = agora;
   controls.update();
   ceu.position.copy(camera.position);
   for (const o of grupoBase.children) {
@@ -472,6 +478,7 @@ renderer.setAnimationLoop(() => {
     const a = (tempo / periodo + fase) * Math.PI * 2;              // volta completa em volta da base
     o.position.set(Math.cos(a) * 55, h + Math.sin(a * 2) * sobe, Math.sin(a) * 55);
   }
+  clima.atualizar(dt, tempo, camera, renderer);
   renderer.render(scene, camera);
 });
 
@@ -490,5 +497,5 @@ carregarClimaEspacial().then(clima => {
 
 // Só para gravar a demo (?demo na URL): expõe câmera e objetos ao script de captura.
 if (new URLSearchParams(location.search).has('demo')) {
-  window.__demo = { THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y };
+  window.__demo = { THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y, clima, ceu };
 }

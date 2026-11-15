@@ -127,6 +127,9 @@ export const FONTES = [
   { rotulo: 'NASA DONKI — Space Weather Database', url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/' },
   { rotulo: 'NASA — Curiosity rover mission', url: 'https://science.nasa.gov/mission/msl-curiosity/' },
   { rotulo: 'USGS Astrogeology — MSL Gale Merged DEM 1 m (terrain, 8 km, 2× vertical)', url: 'https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m' },
+  { rotulo: 'NASA/JPL PIA19400 — Sunset in Gale Crater (blue near the Sun)', url: 'https://photojournal.jpl.nasa.gov/catalog/PIA19400' },
+  { rotulo: 'Lemmon et al. (2024) — MSL optical depth record (dusty southern summer; haze level illustrative)', url: 'https://arxiv.org/abs/2309.07378' },
+  { rotulo: 'NASA/JPL PIA24039 — Curiosity spots a dust devil in Gale', url: 'https://photojournal.jpl.nasa.gov/catalog/PIA24039' },
 ];
 
 function inicial() {
