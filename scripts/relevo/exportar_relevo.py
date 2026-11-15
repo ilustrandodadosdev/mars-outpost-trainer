@@ -1,3 +1,4 @@
+# Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 """Converte a janela do DEM (8 km x 8 km) em assets/relevo/<local>.bin (Uint16 257x257) + <local>.json.
 uso: python exportar_relevo.py <gale|jezero> <janela.npy> <pasta_saida>"""
 import numpy as np, json, math, sys

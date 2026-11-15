@@ -1,3 +1,4 @@
+# Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 """Monta dados/marte-2024.json a partir do NASA DONKI.
 
 Uso:

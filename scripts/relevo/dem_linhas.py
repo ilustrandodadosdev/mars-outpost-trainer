@@ -1,3 +1,4 @@
+# Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 """Lê linhas escolhidas do DEM (1 linha = 1 strip LZW) por HTTP Range, sem baixar o arquivo inteiro.
 uso: python dem_linhas.py ini fim passo saida.npy [col_ini col_fim passo_col]"""
 import os, sys, fsspec, tifffile, numpy as np, requests, imagecodecs

@@ -1,3 +1,4 @@
+# Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 """Trilha original da demo (29,96 s), sintetizada do zero com numpy. Sem amostras de terceiros.
 Roteiro (segundos do vídeo final):
  0–4    título: pad grave em ré menor, drone
