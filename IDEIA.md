@@ -129,3 +129,6 @@ Pedido: "a escala do jogo na tela não está adaptada e as funcionalidades não 
 - **Dica de ação:** uma linha acima dos módulos diz o que fazer agora (escolher módulo, onde clicar, ou que falta energia).
 - **Tutorial de 8 passos:** objetivo, barras, módulos, radiação/abrigo, próximo sol, tempestades, diário, botão "?". Abre sozinho na primeira partida (lembrado no navegador), volta pelo "?", e aceita ←/→/Esc. Destaca cada parte da tela e os números vêm de regras.js, para o tutorial nunca contar uma regra diferente da do jogo. Avisa que os números do jogo são simplificados, não medidas reais.
 - Testado em 1366, 1920, celular em pé (390×844) e deitado (844×390), sem erro no console.
+
+## Publicação (15/11/2026)
+Com o OK do Rogenrique, a versão realista entrou na `main` (fast-forward até e4d378c) e foi publicada na Vercel pela linha de comando (`vercel deploy --prod`; a Vercel não publica sozinha a partir do GitHub). Conferido no ar no PC e no celular, sem erro no console. O vídeo de 30 s e os slides em /demo/ ainda mostram a versão anterior.
