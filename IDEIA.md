@@ -78,3 +78,12 @@ Plano, por ordem de ganho visual por hora de trabalho:
    - Partida completa sem erro no console.
 
 O que não muda: dados reais do DONKI, regra de nunca apresentar dado simulado como real, bilinguismo e o texto do registro.
+
+### Etapa 1 feita: relevo real (15/11/2026)
+- **Fonte:** USGS Astrogeology, *MSL Gale Merged DEM 1 m v3*. O arquivo de 3,9 GB não é baixado inteiro: `scripts/relevo/dem_linhas.py` lê só as linhas necessárias por HTTP Range, uns 20 MB.
+- **Recorte:** quadrado de 8 km × 8 km centrado em -4,6526°, 137,4413°, cerca de 3,7 km ao sul do Bradbury Landing.
+  - 1 unidade do jogo = 100 m.
+  - A tela inicial olha para o sul, com o Monte Sharp no horizonte.
+- **Exagero vertical de 2×**, declarado na lista de fontes do jogo e no README. Em escala real a planície fica lisa demais para ler na tela.
+- **Base:** praça nivelada no centro, como já era. As pedras são decorativas e diminuíram para combinar com a escala.
+- **Achado para a etapa 4:** no celular em pé, a câmera fica colada na grade e o HUD cobre metade da tela. Isso já era assim na `main`.
