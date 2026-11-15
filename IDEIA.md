@@ -12,13 +12,14 @@
 - Mecânica: **aviso de tempestade → poucos sols para ir ao abrigo**. Foi um exemplo dado pelo Claude que o Rogenrique aceitou ("então vamos"). O abrigo protege, mas a estufa fica sem cuidado: troca comida por segurança.
   - Simplificação científica: a luz da explosão chega na hora; as partículas chegam depois (no jogo: classe X = 1 sol, classe M = 2 sols).
 
-## Falta você decidir
-1. **Público:** que idade tem o aluno que vai jogar?
-2. ~~Momento de tensão~~ → decidido: tempestade solar.
-3. **Aprendizado:** o que o aluno tem que entender depois de 5 minutos jogando?
-4. **Vitória e derrota:** como se ganha? (sobreviver N sols, receber a próxima tripulação, completar um experimento…)
-5. **Módulos:** os 4 do esqueleto (Habitat, Solar panel, Greenhouse, Shield) servem? Falta algum?
-6. **Nome do jogo.**
+## Decidido em 14/11/2026 (Rogenrique: "pode seguir conforme sua orientação")
+O Claude apresentou opções; o Rogenrique aceitou o pacote abaixo, mirando a premiação global.
+1. **Público:** alunos de 10 a 14 anos (fundamental II).
+2. **Aprendizado:** "Para viver numa nova fronteira é preciso planejar antes do perigo chegar — e o clima espacial é um perigo real."
+3. **Vitória:** manter o posto de pé até o sol 30, quando a próxima tripulação pousa. **Derrota:** comida ou oxigênio zerados, ou radiação no máximo.
+4. **Módulos:** ficam os 4 (Habitat, Solar panel, Greenhouse, Shield). Profundidade antes de quantidade.
+5. **Nome:** **Mars Outpost Trainer** (o Rogenrique escolheu esse nome para o repositório e para o domínio).
+6. **Prioridades para o global:** dado real da NASA com profundidade (explosões, CMEs previstas para Marte, dose medida pelo Curiosity/RAD), tela final que ensina com fonte, inglês e português, teste com aluno real, vídeo com história.
 
 ## O que já está no esqueleto (técnico, provisório)
 - Terreno 3D gerado (provisório) — trocar por recorte real do **Mars Trek**.

@@ -1,4 +1,6 @@
-# Mars Outpost Trainer (working title)
+# Mars Outpost Trainer
+
+Play in **English or Portuguese** (button next to the title). The end-of-mission debrief explains the real science, with sources.
 
 NASA Space Apps Challenge 2026 — challenge **Build a Junior Astronaut Mission Trainer**.
 

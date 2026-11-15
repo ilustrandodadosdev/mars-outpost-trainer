@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { BARRAS, MODULOS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual } from './regras.js';
+import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual } from './regras.js';
 import { carregarClimaEspacial, montarCalendario } from './donki.js';
+import { t, trocarIdioma, idioma, FONTES } from './textos.js';
 
 // ---------- Cena ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -129,9 +130,18 @@ let fonteClima = null;
 const ocupado = () => new Set(estado.modulos.map(m => `${m.x},${m.z}`));
 
 const elBarras = document.getElementById('barras');
-elBarras.innerHTML = BARRAS.map(b => `<div class="barra" data-id="${b.id}"><span>${b.nome}</span><div class="trilho"><div class="cheio"></div></div><span class="valor"></span></div>`).join('');
 const elModulos = document.getElementById('modulos');
-elModulos.innerHTML = Object.entries(MODULOS).map(([id, m]) => `<button data-id="${id}" aria-pressed="false"><b>${m.nome}</b><span>cost ${m.custo} power · ${m.resumo}</span></button>`).join('');
+function montarTextosFixos() {
+  document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'en';
+  elBarras.innerHTML = BARRAS.map(b => `<div class="barra" data-id="${b.id}"><span>${t(b.id)}</span><div class="trilho"><div class="cheio"></div></div><span class="valor"></span></div>`).join('');
+  elModulos.innerHTML = Object.entries(MODULOS).map(([id, m]) => `<button data-id="${id}" aria-pressed="false"><b>${t(id)}</b><span>${t('custo', { n: m.custo })} · ${t(id + '_r')}</span></button>`).join('');
+  const elIdioma = document.getElementById('idioma');
+  elIdioma.textContent = t('idioma');
+  elIdioma.title = t('idiomaTitulo');
+  document.getElementById('proximo').textContent = t('proximo');
+  document.getElementById('reiniciar').textContent = t('reiniciar');
+}
+montarTextosFixos();
 const elRegistro = document.getElementById('registro');
 const elDica = document.getElementById('dica');
 
@@ -155,11 +165,11 @@ function atualizarHUD() {
     el.querySelector('.cheio').style.background = corBarra(v, b.ruimAlto);
     el.querySelector('.valor').textContent = v;
   }
-  document.getElementById('sol').textContent = `Sol ${Math.min(estado.sol, 30)}`;
+  document.getElementById('sol').textContent = t('sol', { n: Math.min(estado.sol, 30) });
   const data = calendario.dataDoSol ? calendario.dataDoSol(estado.sol) : null;
-  document.getElementById('clima').textContent = !fonteClima ? 'Loading NASA space weather…'
-    : data ? `Real space weather for ${data} · ${fonteClima}`
-    : `Space weather: ${fonteClima}`;
+  document.getElementById('clima').textContent = !fonteClima ? t('carregando')
+    : data ? t('climaReal', { data, fonte: fonteClima })
+    : t('clima', { fonte: fonteClima });
 
   // aviso de tempestade + abrigo
   const elAviso = document.getElementById('aviso');
@@ -171,14 +181,14 @@ function atualizarHUD() {
     elAviso.hidden = false;
     elAviso.classList.remove('calmo');
     document.getElementById('aviso-texto').innerHTML =
-      `⚠️ <b>${proxima.flare.classe}</b> solar storm ${faltam === 0 ? '<b>hits at the end of this sol</b>' : `hits in <b>${faltam + 1} sols</b>`}. ` +
-      (estado.abrigo ? `Crew in shelter · ${pct}% protected.` : `Crew outside · ${pct}% protected.`);
+      (faltam === 0 ? t('avisoHoje', { classe: proxima.flare.classe }) : t('avisoEm', { classe: proxima.flare.classe, n: faltam + 1 })) + ' ' +
+      t(estado.abrigo ? 'tripDentro' : 'tripFora', { p: pct });
   } else if (estado.abrigo) {
     elAviso.hidden = false;
     elAviso.classList.add('calmo');
-    document.getElementById('aviso-texto').textContent = `Crew in shelter (${pct}% protected). Greenhouse is unattended.`;
+    document.getElementById('aviso-texto').textContent = t('abrigoCalmo', { p: pct });
   } else elAviso.hidden = true;
-  document.getElementById('abrigo').textContent = estado.abrigo ? 'Leave shelter' : 'Take shelter';
+  document.getElementById('abrigo').textContent = t(estado.abrigo ? 'sairAbrigo' : 'entrarAbrigo');
   for (const btn of elModulos.querySelectorAll('button')) {
     btn.disabled = !podeConstruir(estado, btn.dataset.id);
     btn.setAttribute('aria-pressed', String(btn.dataset.id === selecionado));
@@ -228,7 +238,7 @@ renderer.domElement.addEventListener('pointermove', ev => {
   if (m && !selecionado) {
     elDica.hidden = false;
     elDica.style.left = ev.clientX + 'px'; elDica.style.top = ev.clientY + 'px';
-    elDica.textContent = `${MODULOS[m.tipo].nome} · ${MODULOS[m.tipo].resumo}`;
+    elDica.textContent = `${t(m.tipo)} · ${t(m.tipo + '_r')}`;
   } else elDica.hidden = true;
 });
 renderer.domElement.addEventListener('pointerdown', ev => { inicioClique = { x: ev.clientX, y: ev.clientY }; });
@@ -242,7 +252,7 @@ renderer.domElement.addEventListener('pointerup', ev => {
   obj.scale.setScalar(0.01);
   obj.userData.crescer = true;
   grupoBase.add(obj);
-  registrar(`Built <b>${MODULOS[selecionado].nome}</b>.`);
+  registrar(t('construiu', { nome: t(selecionado) }));
   if (!podeConstruir(estado, selecionado)) selecionado = null;
   atualizarFantasma();
   atualizarHUD();
@@ -256,22 +266,22 @@ document.getElementById('proximo').addEventListener('click', () => {
   const solAtual = estado.sol;
   const flares = calendario.porSol(solAtual);
   const eventos = avancarSol(estado, flares);
-  const origem = f => f.simulado ? '(simulated)'
-    : `recorded by NASA on ${f.data}${f.link ? ` · <a href="${f.link}" target="_blank" rel="noopener">source</a>` : ''}`;
+  const origem = f => f.simulado ? t('origemSim')
+    : t('origemReal', { data: f.data }) + (f.link ? ` · <a href="${f.link}" target="_blank" rel="noopener">${t('fonte')}</a>` : '');
   for (const ev of eventos) {
     if (ev.tipo === 'aviso') {
-      registrar(`☀️ Sol ${solAtual}: <b>${ev.flare.classe}</b> flare seen ${origem(ev.flare)}. Particle storm on the way!`, true);
+      registrar(t('regAviso', { sol: solAtual, classe: ev.flare.classe, origem: origem(ev.flare) }), true);
       flash.color.set(0xfff2a8);
       flash.intensity = Math.max(flash.intensity, ev.flare.classe[0] === 'X' ? 3 : 1.6);
     } else if (ev.tipo === 'tempestade') {
-      registrar(`🌩️ Sol ${solAtual}: storm hit the outpost — dose +${ev.dose.toFixed(1)} (${Math.round(ev.protecao * 100)}% protected${ev.abrigo ? ', in shelter' : ''}).`, true);
+      registrar(t('regTempestade', { sol: solAtual, dose: ev.dose.toFixed(1), p: Math.round(ev.protecao * 100), abrigo: ev.abrigo ? t('regEmAbrigo') : '' }), true);
       flash.color.set(0xff5030);
       flash.intensity = 3;
     } else if (ev.tipo === 'menor') {
-      registrar(`Sol ${solAtual}: minor <b>${ev.flare.classe}</b> flare ${origem(ev.flare)} — no storm.`);
+      registrar(t('regMenor', { sol: solAtual, classe: ev.flare.classe, origem: origem(ev.flare) }));
     }
   }
-  if (!eventos.length) registrar(`Sol ${solAtual}: quiet sun.`);
+  if (!eventos.length) registrar(t('regCalmo', { sol: solAtual }));
   atualizarHUD();
   if (estado.fim) mostrarFim();
 });
@@ -279,22 +289,40 @@ document.getElementById('proximo').addEventListener('click', () => {
 document.getElementById('abrigo').addEventListener('click', () => {
   if (estado.fim) return;
   estado.abrigo = !estado.abrigo;
-  registrar(estado.abrigo ? '🛡️ Crew moved to the storm shelter. Greenhouse left unattended.' : 'Crew left the shelter.');
+  registrar(t(estado.abrigo ? 'regEntrou' : 'regSaiu'));
   atualizarHUD();
 });
 
 function mostrarFim() {
-  document.getElementById('fim-titulo').textContent = estado.fim.venceu ? 'Mission success!' : 'Mission failed';
-  document.getElementById('fim-texto').textContent = estado.fim.motivo;
+  const s = estado.stats;
+  document.getElementById('fim-titulo').textContent = t(estado.fim.venceu ? 'venceu' : 'perdeu');
+  document.getElementById('fim-texto').textContent = t(estado.fim.motivo, { n: REGRAS.solsParaVencer });
+  document.getElementById('resumo-titulo').textContent = t('resumoTitulo');
+  const evitada = s.doseBruta ? Math.round((1 - s.doseRecebida / s.doseBruta) * 100) : null;
+  document.getElementById('resumo').innerHTML = [
+    t('resumoSols', { n: Math.min(estado.sol - 1, REGRAS.solsParaVencer) }),
+    t('resumoTempestades', { n: s.tempestades }),
+    evitada === null ? null : t('resumoEvitada', { p: evitada }),
+    t('resumoAbrigo', { n: s.solsNoAbrigo }),
+  ].filter(Boolean).map(x => `<li>${x}</li>`).join('');
+  document.getElementById('aprendeu-titulo').textContent = t('aprendeuTitulo');
+  document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3'].map(k => `<li>${t(k)}</li>`).join('');
+  document.getElementById('fontes').innerHTML = FONTES.map(f => `<a href="${f.url}" target="_blank" rel="noopener">${f.rotulo}</a>`).join(' · ');
   document.getElementById('fim').hidden = false;
 }
+document.getElementById('idioma').addEventListener('click', () => {
+  trocarIdioma();
+  montarTextosFixos();
+  atualizarHUD();
+  if (estado.fim) mostrarFim();
+});
 document.getElementById('reiniciar').addEventListener('click', () => {
   estado = estadoInicial();
   grupoBase.clear();
   selecionado = null; fantasma = null;
   elRegistro.innerHTML = '';
   document.getElementById('fim').hidden = true;
-  registrar('New mission started.');
+  registrar(t('novaMissao'));
   atualizarHUD();
 });
 
@@ -317,12 +345,12 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
-registrar('Pick a module below, then click a free tile to build. Drag to look around.');
+registrar(t('inicio'));
 atualizarHUD();
 carregarClimaEspacial().then(clima => {
   fonteClima = clima.fonte;
   calendario = montarCalendario(clima);
-  if (clima.simulado) registrar('⚠️ NASA data not loaded: solar storms are SIMULATED in this run.', true);
-  else registrar(`Loaded ${clima.flares.length} real solar flares (${fonteClima}). Each sol = one real day starting ${calendario.inicio}.`);
+  if (clima.simulado) registrar(t('simulado'), true);
+  else registrar(t('carregou', { n: clima.flares.length, fonte: fonteClima, inicio: calendario.inicio }));
   atualizarHUD();
 });

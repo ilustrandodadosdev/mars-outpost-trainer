@@ -17,27 +17,38 @@
 
 <header class="hud topo">
   <div>
-    <h1>Mars Outpost Trainer <small>working title</small></h1>
+    <h1>Mars Outpost Trainer <button id="idioma" class="idioma"></button></h1>
     <div id="sol" class="sol">Sol 1</div>
-    <div id="clima" class="clima">Loading NASA space weather…</div>
+    <div id="clima" class="clima"></div>
   </div>
   <div id="barras" class="barras"></div>
 </header>
 
 <div id="aviso" class="aviso" hidden role="alert">
   <span id="aviso-texto"></span>
-  <button id="abrigo">Take shelter</button>
+  <button id="abrigo"></button>
 </div>
 
 <aside id="registro" class="hud registro" aria-live="polite"></aside>
 
 <footer class="hud base">
   <div id="modulos" class="modulos"></div>
-  <button id="proximo" class="proximo">Next sol ▶</button>
+  <button id="proximo" class="proximo"></button>
 </footer>
 
 <div id="dica" class="dica" hidden></div>
-<div id="fim" class="fim" hidden><div class="caixa"><h2 id="fim-titulo"></h2><p id="fim-texto"></p><button id="reiniciar">Play again</button></div></div>
+<div id="fim" class="fim" hidden>
+  <div class="caixa">
+    <h2 id="fim-titulo"></h2>
+    <p id="fim-texto"></p>
+    <h3 id="resumo-titulo"></h3>
+    <ul id="resumo"></ul>
+    <h3 id="aprendeu-titulo"></h3>
+    <ul id="fatos"></ul>
+    <p id="fontes" class="fontes"></p>
+    <button id="reiniciar"></button>
+  </div>
+</div>
 
 <script type="module" src="src/main.js"></script>
 </body>

@@ -1,19 +1,19 @@
-// ⚠️ PROVISÓRIO — números técnicos só para o esqueleto rodar.
-// Decidido pelo Rogenrique: o momento de tensão é a TEMPESTADE SOLAR (ver IDEIA.md).
-// O resto (valores, vitória/derrota) ainda é decisão dele: anotar em IDEIA.md e trocar aqui.
+// Regras do jogo. Decisões de design do Rogenrique em IDEIA.md (tempestade solar, vitória no sol 30).
+// Os números de equilíbrio (custos, produção, doses do jogo) são ajuste de jogabilidade, não medidas reais.
+// Os nomes e resumos dos módulos ficam em textos.js (inglês e português).
 
 export const BARRAS = [
-  { id: 'energia',   nome: 'Power',     ruimAlto: false },
-  { id: 'comida',    nome: 'Food',      ruimAlto: false },
-  { id: 'oxigenio',  nome: 'Oxygen',    ruimAlto: false },
-  { id: 'radiacao',  nome: 'Radiation', ruimAlto: true  },
+  { id: 'energia', ruimAlto: false },
+  { id: 'comida', ruimAlto: false },
+  { id: 'oxigenio', ruimAlto: false },
+  { id: 'radiacao', ruimAlto: true  },
 ];
 
 export const MODULOS = {
-  habitat: { nome: 'Habitat',     resumo: 'O₂ +4 · power −3',            custo: 20, efeito: { oxigenio: +4, energia: -3 } },
-  solar:   { nome: 'Solar panel', resumo: 'power +8',                    custo: 6,  efeito: { energia: +8 } },
-  estufa:  { nome: 'Greenhouse',  resumo: 'food +5 · O₂ +2 · power −4',  custo: 15, efeito: { comida: +5, oxigenio: +2, energia: -4 }, paraNoAbrigo: true },
-  escudo:  { nome: 'Shield',      resumo: 'blocks radiation',            custo: 10, efeito: { blindagem: 1 } },
+  habitat: { custo: 20, efeito: { oxigenio: +4, energia: -3 } },
+  solar:   { custo: 6,  efeito: { energia: +8 } },
+  estufa:  { custo: 15, efeito: { comida: +5, oxigenio: +2, energia: -4 }, paraNoAbrigo: true },
+  escudo:  { custo: 10, efeito: { blindagem: 1 } },
 };
 
 export const REGRAS = {
@@ -29,7 +29,8 @@ export const REGRAS = {
 };
 
 export function estadoInicial() {
-  return { sol: 1, energia: 60, comida: 40, oxigenio: 40, radiacao: 0, modulos: [], alertas: [], abrigo: false, fim: null };
+  return { sol: 1, energia: 60, comida: 40, oxigenio: 40, radiacao: 0, modulos: [], alertas: [], abrigo: false, fim: null,
+           stats: { tempestades: 0, doseBruta: 0, doseRecebida: 0, solsNoAbrigo: 0 } };
 }
 
 const limitar = v => Math.max(0, Math.min(100, v));
@@ -78,10 +79,14 @@ export function avancarSol(estado, flares = []) {
   for (const a of estado.alertas.filter(a => a.chega === sol)) {
     const d = a.dose * (1 - protecao);
     dose += d;
+    estado.stats.tempestades += 1;
+    estado.stats.doseBruta += a.dose;
+    estado.stats.doseRecebida += d;
     eventos.push({ tipo: 'tempestade', flare: a.flare, dose: d, abrigo: estado.abrigo, protecao });
   }
   estado.alertas = estado.alertas.filter(a => a.chega > sol);
   estado.radiacao = limitar(estado.radiacao + dose);
+  if (estado.abrigo) estado.stats.solsNoAbrigo += 1;
 
   // 3) explosões vistas hoje → aviso de tempestade a caminho
   for (const f of flares) {
@@ -93,9 +98,9 @@ export function avancarSol(estado, flares = []) {
   }
 
   estado.sol += 1;
-  if (estado.comida <= 0) estado.fim = { venceu: false, motivo: 'The crew ran out of food.' };
-  else if (estado.oxigenio <= 0) estado.fim = { venceu: false, motivo: 'The crew ran out of oxygen.' };
-  else if (estado.radiacao >= 100) estado.fim = { venceu: false, motivo: 'Radiation dose reached the safety limit.' };
-  else if (estado.sol > REGRAS.solsParaVencer) estado.fim = { venceu: true, motivo: `The outpost survived ${REGRAS.solsParaVencer} sols.` };
+  if (estado.comida <= 0) estado.fim = { venceu: false, motivo: 'fimComida' };
+  else if (estado.oxigenio <= 0) estado.fim = { venceu: false, motivo: 'fimOxigenio' };
+  else if (estado.radiacao >= 100) estado.fim = { venceu: false, motivo: 'fimRadiacao' };
+  else if (estado.sol > REGRAS.solsParaVencer) estado.fim = { venceu: true, motivo: 'fimVenceu' };
   return eventos;
 }
