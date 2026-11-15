@@ -1,0 +1,11 @@
+{
+ "fonte": "USGS Astrogeology — MSL Gale Merged DEM 1m v3 (HRSC + CTX + HiRISE, tied to MOLA)",
+ "url": "https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m",
+ "n": 257,
+ "ladoMetros": 8000,
+ "zMin": -4528.34,
+ "zMax": -3681.81,
+ "centroLat": -4.6526,
+ "centroLon": 137.4413,
+ "norteParaMenosZ": true
+}

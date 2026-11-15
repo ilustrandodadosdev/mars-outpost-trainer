@@ -36,8 +36,39 @@ sol.shadow.mapSize.set(2048, 2048);
 Object.assign(sol.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 80 });
 scene.add(sol);
 
-// ---------- Terreno (PROVISÓRIO: relevo gerado; trocar por recorte real do Mars Trek) ----------
+// ---------- Terreno: relevo real da cratera Gale (USGS, MSL Gale Merged DEM 1 m) ----------
+// assets/relevo/gale.bin = 257x257 alturas Uint16 de um quadrado de 8 km centrado ~3,7 km ao sul
+// do pouso do Curiosity (Bradbury Landing). Sul = -z: a câmera inicial olha para o Monte Sharp (Aeolis Mons).
+// 1 unidade = 100 m na horizontal; relevo com exagero vertical declarado (EXAGERO) para ser legível.
+// A base fica numa praça nivelada no centro; fora dela o chão é o de Gale de verdade.
 const BASE_Y = 1.4;
+const CELULAR = matchMedia('(pointer: coarse)').matches;
+const LADO = 80;
+const EXAGERO = 2;
+async function carregarRelevo() {
+  try {
+    const [meta, bin] = await Promise.all([
+      fetch('assets/relevo/gale.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch('assets/relevo/gale.bin').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }),
+    ]);
+    const u = new Uint16Array(bin), n = meta.n, esc = (meta.zMax - meta.zMin) / 65535;
+    const metrosPorUnidade = meta.ladoMetros / LADO;
+    const c = (n - 1) / 2, zCentro = meta.zMin + u[c * n + c] * esc;
+    const alt = new Float32Array(n * n);
+    for (let i = 0; i < n * n; i++) alt[i] = (meta.zMin + u[i] * esc - zCentro) / metrosPorUnidade * EXAGERO;
+    return { n, alt, meta };
+  } catch (e) {
+    console.warn('relevo real não carregou, usando o gerado', e);
+    return null;
+  }
+}
+const relevo = await carregarRelevo();
+function alturaReal(x, z) {
+  const n = relevo.n, f = (v) => THREE.MathUtils.clamp((v / LADO + 0.5) * (n - 1), 0, n - 1.001);
+  const u = f(-x), v = f(-z), i = Math.floor(u), j = Math.floor(v), a = u - i, b = v - j;
+  const A = relevo.alt, k = j * n + i;
+  return (A[k] * (1 - a) + A[k + 1] * a) * (1 - b) + (A[k + n] * (1 - a) + A[k + n + 1] * a) * b;
+}
 const MEIO = 5; // área de construção: células de -5 a 5
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
 function ruido(x, y) {
@@ -48,31 +79,44 @@ function ruido(x, y) {
 }
 const CRATERAS = [[-15, -9, 5, 2.2], [17, 6, 3.5, 1.6], [4, 19, 6, 2.6], [-12, 15, 2.5, 1.1]];
 function altura(x, z) {
+  const k = THREE.MathUtils.smoothstep(Math.hypot(x, z), MEIO + 1.5, MEIO + 7);
+  if (relevo) return THREE.MathUtils.lerp(BASE_Y, BASE_Y + alturaReal(x, z), k);
   let h = ruido(x * 0.09, z * 0.09) * 3.2 + ruido(x * 0.3, z * 0.3) * 0.7;
   for (const [cx, cz, r, p] of CRATERAS) {
     const d = Math.hypot(x - cx, z - cz) / r;
     if (d < 1) h -= p * (1 - d * d);
     h += p * 0.45 * Math.exp(-((d - 1) ** 2) / 0.02);
   }
-  const k = THREE.MathUtils.smoothstep(Math.hypot(x, z), MEIO + 1.5, MEIO + 7);
   return THREE.MathUtils.lerp(BASE_Y, h, k);
 }
 
-const geo = new THREE.PlaneGeometry(80, 80, 110, 110).rotateX(-Math.PI / 2);
+// malha: 256 segmentos no PC (1 vértice por amostra do DEM), 128 no celular
+const SEG = relevo ? (CELULAR ? 128 : 256) : 110;
+const geo = new THREE.PlaneGeometry(LADO, LADO, SEG, SEG).rotateX(-Math.PI / 2);
 const pos = geo.attributes.position;
 for (let i = 0; i < pos.count; i++) pos.setY(i, altura(pos.getX(i), pos.getZ(i)));
-const terrenoGeo = geo.toNonIndexed();
+const terrenoGeo = relevo ? geo : geo.toNonIndexed();
 terrenoGeo.computeVertexNormals();
 const cores = [];
-const c1 = new THREE.Color(0x9c4a26), c2 = new THREE.Color(0xc9773f), cTmp = new THREE.Color();
-const tp = terrenoGeo.attributes.position;
-for (let i = 0; i < tp.count; i += 3) {
-  const y = (tp.getY(i) + tp.getY(i + 1) + tp.getY(i + 2)) / 3;
-  cTmp.copy(c1).lerp(c2, THREE.MathUtils.clamp(y / 3.5 + (hash(i, 7) - 0.5) * 0.25, 0, 1));
-  for (let k = 0; k < 3; k++) cores.push(cTmp.r, cTmp.g, cTmp.b);
+const c1 = new THREE.Color(0x9c4a26), c2 = new THREE.Color(0xc9773f), c3 = new THREE.Color(0x5e3220), cTmp = new THREE.Color();
+const tp = terrenoGeo.attributes.position, tn = terrenoGeo.attributes.normal;
+if (relevo) {
+  // cor por vértice: poeira clara no plano, rocha escura nas encostas, tom mais claro no alto do monte
+  for (let i = 0; i < tp.count; i++) {
+    const encosta = 1 - tn.getY(i), y = tp.getY(i);
+    cTmp.copy(c1).lerp(c2, THREE.MathUtils.clamp(0.55 + y / 12 + (hash(i, 7) - 0.5) * 0.12, 0, 1));
+    cTmp.lerp(c3, THREE.MathUtils.clamp(encosta * 4, 0, 0.7));
+    cores.push(cTmp.r, cTmp.g, cTmp.b);
+  }
+} else {
+  for (let i = 0; i < tp.count; i += 3) {
+    const y = (tp.getY(i) + tp.getY(i + 1) + tp.getY(i + 2)) / 3;
+    cTmp.copy(c1).lerp(c2, THREE.MathUtils.clamp(y / 3.5 + (hash(i, 7) - 0.5) * 0.25, 0, 1));
+    for (let k = 0; k < 3; k++) cores.push(cTmp.r, cTmp.g, cTmp.b);
+  }
 }
 terrenoGeo.setAttribute('color', new THREE.Float32BufferAttribute(cores, 3));
-const terreno = new THREE.Mesh(terrenoGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }));
+const terreno = new THREE.Mesh(terrenoGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: !relevo, roughness: 1 }));
 terreno.receiveShadow = true;
 scene.add(terreno);
 
@@ -81,7 +125,7 @@ const matPedra = new THREE.MeshStandardMaterial({ color: 0x6e3a22, flatShading: 
 for (let i = 0; i < 70; i++) {
   const x = (hash(i, 1) - 0.5) * 60, z = (hash(i, 2) - 0.5) * 60;
   if (Math.hypot(x, z) < MEIO + 3) continue;
-  const s = 0.2 + hash(i, 3) * 0.9;
+  const s = 0.08 + hash(i, 3) * (relevo ? 0.3 : 0.9);
   const p = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), matPedra);
   p.position.set(x, altura(x, z) + s * 0.3, z);
   p.rotation.set(hash(i, 4) * 3, hash(i, 5) * 3, 0);

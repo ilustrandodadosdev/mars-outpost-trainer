@@ -126,6 +126,7 @@ export const FONTES = [
   { rotulo: 'NASA (2024) — Mars lights up during epic solar storm', url: 'https://www.nasa.gov/missions/maven/nasa-watches-mars-light-up-during-epic-solar-storm/' },
   { rotulo: 'NASA DONKI — Space Weather Database', url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/' },
   { rotulo: 'NASA — Curiosity rover mission', url: 'https://science.nasa.gov/mission/msl-curiosity/' },
+  { rotulo: 'USGS Astrogeology — MSL Gale Merged DEM 1 m (terrain, 8 km, 2× vertical)', url: 'https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m' },
 ];
 
 function inicial() {

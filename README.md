@@ -27,7 +27,7 @@ Then open http://localhost:8765.
 - **DONKI — Space Weather Database Of Notifications, Knowledge, Information** (https://api.nasa.gov): the **WSA-Enlil** simulations list each coronal mass ejection (CME) predicted to reach Mars, with arrival time, speed and whether it is a direct hit or a glancing blow. The game warns the player on the day the CME left the Sun and hits the outpost on the predicted arrival day.
 - **Curiosity RAD / NASA (2024)**: the 20 May 2024 solar particle event (8.1 mGy on the surface of Mars) is the mission finale.
 - `scripts/montar_dados.py` turns the raw DONKI files into `dados/marte-2024.json` (run with `--baixar` and your own api.nasa.gov key in `NASA_API_KEY` to download again). The radiation doses in the game are balanced for play, not real measurements.
-- **Mars Trek** (planned: real terrain for the outpost site). https://trek.nasa.gov/mars/
+- **Gale Crater terrain**: the ground around the outpost is real. It is an 8 km × 8 km cut, about 3.7 km south of Curiosity's landing site, from the USGS Astrogeology *MSL Gale Merged DEM 1 m* (built from NASA MRO HiRISE and CTX and ESA Mars Express HRSC stereo, tied to NASA MGS MOLA). Mount Sharp (Aeolis Mons) rises on the horizon. Relief is shown with a 2× vertical exaggeration so it reads on screen, and the outpost sits on a levelled pad. https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m (scripts in `scripts/relevo/`).
 
 ## Other resources
 - [three.js](https://threejs.org) (MIT) — 3D rendering.

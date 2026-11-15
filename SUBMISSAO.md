@@ -64,7 +64,7 @@ When a coronal mass ejection leaves the Sun, a warning appears with the predicte
 - It needs no install and no account. It runs in any browser, including school computers, and a full mission takes about 10 minutes.
 - It is bilingual: one click switches between English and Portuguese, so it works in Brazilian classrooms as well as English-speaking ones.
 - Next steps:
-  - real Gale Crater terrain from NASA Mars Trek;
+  - touch controls and a phone layout;
   - more missions from other DONKI storm seasons;
   - a teacher guide and classroom playtests;
   - more languages.
