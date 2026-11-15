@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mars Outpost Trainer — Demo</title>
+<style>
+  :root { --bg: #1d110c; --card: #2a1912; --ink: #fff4ea; --soft: #e6d3c4; --acc: #ff8a50; --line: #4a2c1f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0f0906; color: var(--ink); font-family: "Segoe UI", system-ui, sans-serif; }
+  .deck { display: grid; gap: 24px; padding: 24px; justify-content: center; }
+  .slide { width: min(1280px, calc(100vw - 32px)); aspect-ratio: 16 / 9; background: var(--bg); border-radius: 14px; overflow: hidden;
+           position: relative; display: grid; grid-template-columns: 1fr 1.25fr; container-type: inline-size; }
+  .txt { padding: 5cqw 3.5cqw 4cqw 5cqw; display: flex; flex-direction: column; justify-content: center; gap: 1.6cqw; }
+  .n { position: absolute; left: 5cqw; top: 3cqw; font-size: 1.2cqw; letter-spacing: .15em; text-transform: uppercase; color: var(--acc); font-weight: 700; }
+  h1 { font-size: 5.2cqw; margin: 0; line-height: 1.05; }
+  h2 { font-size: 3.1cqw; margin: 0; line-height: 1.15; }
+  p, li { font-size: 1.75cqw; line-height: 1.45; color: var(--soft); margin: 0; }
+  ul { margin: 0; padding-left: 1.2em; display: grid; gap: .8cqw; }
+  b { color: var(--ink); }
+  .acc { color: var(--acc); }
+  .img { position: relative; background: #000; }
+  .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .img.dois { display: grid; grid-template-rows: minmax(0,1fr) minmax(0,1fr); gap: 3px; min-height: 0; }
+  .full { grid-template-columns: 1fr; }
+  .full .img { position: absolute; inset: 0; }
+  .full .img img { filter: brightness(.3) blur(2px); }
+  .full .txt { position: relative; z-index: 1; align-items: center; text-align: center; }
+  .tag { display: inline-block; font-size: 1.4cqw; padding: .4cqw 1cqw; border: 1px solid var(--line); border-radius: 99px; color: var(--soft); }
+  .rodape { position: absolute; right: 1.5cqw; bottom: 1cqw; font-size: 1cqw; color: #b9a596; z-index: 2; }
+  a { color: var(--acc); }
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    body { background: var(--bg); }
+    .deck { padding: 0; gap: 0; }
+    .slide { width: 1280px; height: 720px; border-radius: 0; break-after: page; }
+    .slide:last-child { break-after: auto; }
+  }
+</style>
+</head>
+<body>
+<main class="deck">
+
+  <!-- 1. Title -->
+  <section class="slide full">
+    <div class="img"><img src="img/02-base.png" alt="The Mars outpost in the game"></div>
+    <div class="txt">
+      <span class="tag">NASA Space Apps Challenge 2026 · Build a Junior Astronaut Mission Trainer</span>
+      <h1>Mars Outpost Trainer</h1>
+      <h2 class="acc">Survive the real solar storms of May 2024</h2>
+      <p><b>Team Mars Outpost Trainer</b> · Rogenrique Melo</p>
+      <p>Play free in the browser: <a href="https://mars-outpost-trainer.vercel.app">mars-outpost-trainer.vercel.app</a></p>
+    </div>
+    <div class="rodape">Game screenshots · code written with AI assistance (Claude)</div>
+  </section>
+
+  <!-- 2. Intro / problem -->
+  <section class="slide">
+    <span class="n">The challenge</span>
+    <div class="txt">
+      <h2>Living on a new frontier means planning <span class="acc">before</span> the danger arrives</h2>
+      <p>On Mars there is no thick atmosphere or magnetic field to stop radiation from the Sun. Solar storms are one of the biggest real risks for future astronauts.</p>
+      <p>Mars Outpost Trainer lets <b>students aged 10–14</b> feel that risk safely: they run an outpost for 30 sols and must keep the crew fed, breathing and protected.</p>
+    </div>
+    <div class="img"><img src="img/02-base.png" alt="The outpost on Mars"></div>
+    <div class="rodape">Game screenshot · code written with AI assistance (Claude)</div>
+  </section>
+
+  <!-- 3. User experience -->
+  <section class="slide">
+    <span class="n">How you play</span>
+    <div class="txt">
+      <h2>Build, balance, survive 30 sols</h2>
+      <ul>
+        <li>Pick a module and click a tile: <b>Habitat</b> (oxygen), <b>Solar panel</b> (power), <b>Greenhouse</b> (food) and <b>Shield</b> (radiation).</li>
+        <li>Watch four bars: <b>Power, Food, Oxygen, Radiation</b>.</li>
+        <li>A storm warning comes in: move the crew to the <b>shelter</b> — but the greenhouse is left unattended. Safety costs food.</li>
+        <li>No install, works in any browser, one click to play.</li>
+      </ul>
+    </div>
+    <div class="img"><img src="img/06-tempestade.png" alt="Crew in shelter as a storm hits"></div>
+    <div class="rodape">Game screenshot · code written with AI assistance (Claude)</div>
+  </section>
+
+  <!-- 4. NASA data -->
+  <section class="slide">
+    <span class="n">Real NASA data</span>
+    <div class="txt">
+      <h2>Every storm in the game really happened</h2>
+      <ul>
+        <li>Each sol is <b>one real day, 21 April – 20 May 2024</b>.</li>
+        <li>The storms are the <b>14 coronal mass ejections</b> that NASA’s <b>WSA-Enlil</b> model predicted would reach Mars, from the <b>NASA DONKI</b> space weather database.</li>
+        <li>The warning arrives the day the CME left the Sun; it hits on the day NASA predicted, with its real speed and whether it was a direct hit.</li>
+        <li>Each log entry links to the NASA record.</li>
+      </ul>
+    </div>
+    <div class="img"><img src="img/05-aviso.png" alt="Game log citing NASA DONKI"></div>
+    <div class="rodape">Game screenshot · code written with AI assistance (Claude)</div>
+  </section>
+
+  <!-- 5. Faithful setting -->
+  <section class="slide">
+    <span class="n">Faithful to the facts</span>
+    <div class="txt">
+      <h2>An imaginary outpost in a real place</h2>
+      <ul>
+        <li>It stands in <b>Gale Crater, next to NASA’s Curiosity rover</b>; its RAD radiation detector glows when a storm hits.</li>
+        <li>Two lights cross the sky: the orbiters <b>MAVEN</b> and <b>Mars Odyssey</b>, which also watched the May 2024 storm.</li>
+        <li>Finale: <b>20 May 2024</b>, the biggest surge Curiosity’s RAD had measured since landing in 2012.</li>
+        <li>We say clearly what we simplified: game doses are balanced for play, and the real particles arrived in tens of minutes, not one sol.</li>
+      </ul>
+    </div>
+    <div class="img"><img src="img/03-curiosity.png" alt="Curiosity rover next to the outpost"></div>
+    <div class="rodape">Game screenshot · code written with AI assistance (Claude)</div>
+  </section>
+
+  <!-- 6. Debrief, bilingual -->
+  <section class="slide">
+    <span class="n">Learning</span>
+    <div class="txt">
+      <h2>The debrief turns the game into science</h2>
+      <ul>
+        <li>At the end, students see what they did (storms survived, radiation blocked, sols in shelter) next to <b>what the real data shows</b>.</li>
+        <li>NASA calculated an astronaut next to Curiosity would have received <b>8,100 micrograys</b> on 20 May 2024 — like 30 chest X-rays.</li>
+        <li>Every fact links to its source (NASA, DONKI, Science 2014).</li>
+        <li>One click switches <b>English ⇄ Portuguese</b>.</li>
+      </ul>
+    </div>
+    <div class="img dois"><img src="img/08-debrief-fatos.png" alt="Debrief in English"><img src="img/09-debrief-pt.png" alt="Debrief in Portuguese"></div>
+    <div class="rodape">Game screenshots · code written with AI assistance (Claude)</div>
+  </section>
+
+  <!-- 7. Future -->
+  <section class="slide">
+    <span class="n">What’s next</span>
+    <div class="txt">
+      <h2>From one storm season to a full mission trainer</h2>
+      <ul>
+        <li><b>Real terrain</b> of Gale Crater from NASA Mars Trek.</li>
+        <li><b>More missions</b> from other real space weather seasons in DONKI — new data, new challenges.</li>
+        <li><b>Classroom mode</b>: teacher guide and playtests with students.</li>
+        <li>More languages, so any school can use it for free.</li>
+      </ul>
+      <p><b>Play:</b> <a href="https://mars-outpost-trainer.vercel.app">mars-outpost-trainer.vercel.app</a><br>
+         <b>Code:</b> <a href="https://github.com/ilustrandodadosdev/mars-outpost-trainer">github.com/ilustrandodadosdev/mars-outpost-trainer</a></p>
+    </div>
+    <div class="img"><img src="img/07-debrief.png" alt="Mission success screen"></div>
+    <div class="rodape">Game screenshot · code written with AI assistance (Claude)</div>
+  </section>
+
+</main>
+</body>
+</html>

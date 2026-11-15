@@ -18,6 +18,11 @@ python -m http.server 8765
 
 Then open http://localhost:8765.
 
+## Demo
+- 30-second video and 7 slides: https://mars-outpost-trainer.vercel.app/demo/
+- Submission texts: `SUBMISSAO.md`.
+- The demo was captured from the real game with Playwright (`?demo` in the URL exposes the camera to the capture script; it changes nothing in play).
+
 ## NASA data
 - **DONKI — Space Weather Database Of Notifications, Knowledge, Information** (https://api.nasa.gov): the **WSA-Enlil** simulations list each coronal mass ejection (CME) predicted to reach Mars, with arrival time, speed and whether it is a direct hit or a glancing blow. The game warns the player on the day the CME left the Sun and hits the outpost on the predicted arrival day.
 - **Curiosity RAD / NASA (2024)**: the 20 May 2024 solar particle event (8.1 mGy on the surface of Mars) is the mission finale.
@@ -30,4 +35,4 @@ Then open http://localhost:8765.
 ## Use of AI
 This project was built with the help of **Claude (Anthropic)**, used as a coding assistant.
 The game idea, rules and educational goals are the participant's own (see `IDEIA.md`).
-AI-assisted parts: game engine code (`src/`), page layout, and documentation drafts.
+AI-assisted parts: game engine code (`src/`), page layout, documentation and submission drafts, and the scripts that captured and edited the demo. Video frames and slides are real game screenshots and carry a visible AI-assistance note.

@@ -403,3 +403,8 @@ carregarClimaEspacial().then(clima => {
   else registrar(t('carregou', { n: clima.eventos.length, inicio: calendario.inicio }));
   atualizarHUD();
 });
+
+// Só para gravar a demo (?demo na URL): expõe câmera e objetos ao script de captura.
+if (new URLSearchParams(location.search).has('demo')) {
+  window.__demo = { THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y };
+}
