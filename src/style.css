@@ -80,3 +80,5 @@ h1 small { font-size: 11px; color: var(--suave); font-weight: 400; margin-left: 
 .fim .fontes { font-size: 11px; color: var(--suave); }
 .fim .fontes a { color: var(--suave); }
 .fim button { display: block; margin: 16px auto 0; }
+/* no debrief, o topo (com o botão de idioma) fica acima da camada escura para dar para trocar de idioma */
+body.em-debrief .topo { z-index: 6; }

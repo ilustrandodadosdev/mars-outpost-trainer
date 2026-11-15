@@ -2,6 +2,8 @@
 const T = {
   en: {
     carregando: 'Loading NASA space weather…',
+    fonteSimulada: 'SIMULATED — no NASA data loaded',
+    fonteReal: 'NASA DONKI — WSA-Enlil CME arrival predictions for Mars; NASA 2024 (Curiosity RAD)',
     climaReal: 'Real space weather for {data} · {fonte}',
     clima: 'Space weather: {fonte}',
     sol: 'Sol {n}',
@@ -62,6 +64,8 @@ const T = {
   },
   pt: {
     carregando: 'Carregando o clima espacial da NASA…',
+    fonteSimulada: 'SIMULADO — dados da NASA não carregaram',
+    fonteReal: 'NASA DONKI — previsões WSA-Enlil de chegada de CMEs a Marte; NASA 2024 (Curiosity RAD)',
     climaReal: 'Clima espacial real de {data} · {fonte}',
     clima: 'Clima espacial: {fonte}',
     sol: 'Sol {n}',
@@ -129,6 +133,7 @@ function inicial() {
   return (navigator.language || '').toLowerCase().startsWith('pt') ? 'pt' : 'en';
 }
 export let idioma = inicial();
+document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'en';
 export function trocarIdioma() {
   idioma = idioma === 'en' ? 'pt' : 'en';
   try { localStorage.setItem('idioma', idioma); } catch {}

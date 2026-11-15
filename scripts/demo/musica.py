@@ -73,7 +73,7 @@ BPM = 100; E8 = 60 / BPM / 2      # colcheia = 0,3 s
 
 # 0–4 título: drone + pad Dm
 pad(0.0, 6.0, ['D2', 'A2'], 0.55, a=1.5, r=2.0)
-pad(0.3, 4.6, ['D3', 'F3', 'A3', 'E4'], 0.45, a=1.8, r=1.0)
+pad(0.3, 4.6, ['D3', 'F3', 'A3', 'E4'], 0.3, a=1.8, r=1.0)
 
 # 4–12.5 construção / Curiosity: progressão Dm – Bb – F – C, arpejo em colcheias
 prog = [(['D3', 'F3', 'A3'], ['D4', 'A4', 'F4', 'A4']),
@@ -83,7 +83,7 @@ prog = [(['D3', 'F3', 'A3'], ['D4', 'A4', 'F4', 'A4']),
 c0 = 4.0; dur_acorde = 8 * E8 * 0.885   # ~2,12 s por acorde -> 4 acordes até 12,5
 for k, (acorde, arp) in enumerate(prog):
     ini = c0 + k * dur_acorde
-    pad(ini, ini + dur_acorde + 0.6, acorde, 0.38, a=0.4, r=0.6)
+    pad(ini, ini + dur_acorde + 0.6, acorde, 0.24, a=0.4, r=0.6)
     passo = dur_acorde / 8
     for j in range(8):
         pluck(ini + j * passo, arp[j % 4], 0.16 * (1 if j % 2 == 0 else 0.7), pan=(-0.4 if j % 2 else 0.4))
@@ -92,25 +92,25 @@ pad(4.0, 12.8, ['D2'], 0.35, a=1.0, r=0.6)
 # 12.5–19 tempestades: baixo pulsando em ré, pad tenso (Dm add9 -> Bb), bipes de alerta
 for j in range(int((19.0 - 12.5) / E8)):
     tj = 12.5 + j * E8
-    baixo(tj, 'D2' if (j // 8) % 2 == 0 else 'Bb1', 0.32 * (1.0 if j % 2 == 0 else 0.6))
-pad(12.5, 16.0, ['D3', 'F3', 'A3', 'E4'], 0.34, a=0.3, r=0.5)
-pad(15.6, 19.2, ['Bb2', 'D3', 'F3', 'C4'], 0.36, a=0.3, r=0.5)
+    baixo(tj, 'D2' if (j // 8) % 2 == 0 else 'Bb1', 0.55 * (1.0 if j % 2 == 0 else 0.6))
+pad(12.5, 16.0, ['D3', 'F3', 'A3', 'E4'], 0.48, a=0.3, r=0.5)
+pad(15.6, 19.2, ['Bb2', 'D3', 'F3', 'C4'], 0.5, a=0.3, r=0.5)
 for tb in (12.6, 12.75, 15.6, 15.75):
-    bip(tb, 0.09)
+    bip(tb, 0.13)
 for j in range(16):
-    pluck(12.5 + j * 2 * E8, ['A4', 'E5', 'F5', 'E5'][j % 4], 0.07, dur=0.35, pan=0.5, brilho=5)
+    pluck(12.5 + j * 2 * E8, ['A4', 'E5', 'F5', 'E5'][j % 4], 0.11, dur=0.35, pan=0.5, brilho=5)
 
 # 19–22.4 final: riser + bipes acelerando + baixo
-IMPACTO = 19.0 + (107.3 - 100.4) / (108.5 - 100.4) * 4.0   # ~22,41 s
+IMPACTO = 19.0 + (182.42 - 177.6) / (183.25 - 177.6) * 4.0   # ~22,41 s (fim da missão na gravação)
 nr = int((IMPACTO - 19.0) * SR)
 riser = ruido_filtrado(nr, 300, 9000) * np.linspace(0, 1, nr) ** 2
-soma(19.0, riser, 0.22)
-pad(19.0, IMPACTO + 0.05, ['C#3', 'E3', 'G3', 'A3'], 0.42, a=0.8, r=0.05)
+soma(19.0, riser, 0.4)
+pad(19.0, IMPACTO + 0.05, ['C#3', 'E3', 'G3', 'A3'], 0.55, a=0.8, r=0.05)
 tb = 19.05; passo = 0.42
 while tb < IMPACTO - 0.1:
-    bip(tb, 0.08, 1760); tb += passo; passo = max(0.12, passo * 0.82)
+    bip(tb, 0.12, 1760); tb += passo; passo = max(0.12, passo * 0.82)
 for j in range(int((IMPACTO - 19.0) / (E8 / 2))):
-    baixo(19.0 + j * E8 / 2, 'A1', 0.22, dur=0.13)
+    baixo(19.0 + j * E8 / 2, 'A1', 0.4, dur=0.13)
 
 # 22,41 impacto: boom grave + estouro de ruído
 nb = int(2.2 * SR); tt = np.arange(nb) / SR
@@ -127,6 +127,9 @@ pad(27.6, DUR, ['D3', 'F#3', 'A3', 'D4'], 0.40, a=0.9, r=0.3)
 pad(23.2, DUR, ['D2'], 0.32, a=1.5, r=0.3)
 for j, nota in enumerate(['A4', 'D5', 'F#5', 'A5', 'F#5', 'D5', 'E5', 'A4', 'D5', 'F#5', 'A5', 'D6']):
     pluck(23.4 + j * 0.55, nota, 0.11, dur=1.4, pan=(-0.5 if j % 2 else 0.5), brilho=1.6)
+
+# abertura e construção mais baixas que as tempestades (-4 dB até 12,3 s, sobe até 12,6 s)
+g = np.interp(t, [0, 12.3, 12.6, DUR], [0.63, 0.63, 1.0, 1.0]); L *= g; R *= g
 
 # reverb simples: convolução com resposta exponencial (FFT)
 def reverb(x, seg=2.2, mix=0.25):

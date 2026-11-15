@@ -34,3 +34,12 @@ O Claude apresentou opções; o Rogenrique aceitou o pacote abaixo, mirando a pr
 - Ficam de fora: Ingenuity (missão encerrada em 25/01/2024), InSight (encerrada antes), Perseverance (ativo, mas em Jezero e não citado no evento).
 - Os 8.100 µGy são a conta da NASA para "um astronauta ao lado do Curiosity", não uma leitura direta — o texto diz isso.
 - No evento final, as partículas chegaram em dezenas de minutos; o jogo dá 1 sol de aviso, e a tela final explica essa simplificação.
+
+## Inscrição: só no Global (decidido em 15/11/2026, Rogenrique: "Nosso projeto concorrerá só no Global ok?")
+- O projeto concorre apenas na premiação **global** do Space Apps 2026; não participa de julgamento de evento local.
+- Toda a submissão (vídeo, slides, textos em `SUBMISSAO.md`) é em inglês, pensada para os juízes globais.
+
+## Bilinguismo de verdade (15/11/2026)
+- O registro de eventos do jogo agora muda de idioma junto com o resto da tela; antes as linhas antigas ficavam no idioma em que foram escritas.
+- O botão EN/PT funciona também na tela final (antes ficava coberto pela camada escura).
+- A linha da fonte dos dados e o aviso de dados simulados também foram traduzidos. Só os títulos das fontes citadas ficam no idioma original, como em qualquer referência.

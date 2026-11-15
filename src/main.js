@@ -164,6 +164,7 @@ let estado = estadoInicial();
 let selecionado = null;
 let calendario = { porSol: () => [], dataDoSol: null };
 let fonteClima = null;
+let climaSimulado = false;
 const ocupado = () => new Set(estado.modulos.map(m => `${m.x},${m.z}`));
 
 const elBarras = document.getElementById('barras');
@@ -182,11 +183,23 @@ montarTextosFixos();
 const elRegistro = document.getElementById('registro');
 const elDica = document.getElementById('dica');
 
-function registrar(html, alerta = false) {
+// Cada entrada guarda uma função que gera o texto no idioma atual,
+// para o registro inteiro ser redesenhado quando o jogador troca de idioma.
+const entradas = [];
+function desenharEntrada({ texto, alerta }) {
   const p = document.createElement('p');
   if (alerta) p.className = 'alerta';
-  p.innerHTML = html;
+  p.innerHTML = texto();
   elRegistro.prepend(p);
+}
+function registrar(texto, alerta = false) {
+  const e = { texto, alerta };
+  entradas.push(e);
+  desenharEntrada(e);
+}
+function redesenharRegistro() {
+  elRegistro.innerHTML = '';
+  entradas.forEach(desenharEntrada);
 }
 
 function corBarra(v, ruimAlto) {
@@ -205,9 +218,10 @@ function atualizarHUD() {
   }
   document.getElementById('sol').textContent = t('sol', { n: Math.min(estado.sol, 30) });
   const data = calendario.dataDoSol ? calendario.dataDoSol(estado.sol) : null;
-  document.getElementById('clima').textContent = !fonteClima ? t('carregando')
-    : data ? t('climaReal', { data, fonte: fonteClima })
-    : t('clima', { fonte: fonteClima });
+  document.getElementById('clima').textContent = climaSimulado ? t('clima', { fonte: t('fonteSimulada') })
+    : !fonteClima ? t('carregando')
+    : data ? t('climaReal', { data, fonte: t('fonteReal') })
+    : t('clima', { fonte: t('fonteReal') });
 
   // aviso de tempestade + abrigo
   const elAviso = document.getElementById('aviso');
@@ -291,7 +305,8 @@ renderer.domElement.addEventListener('pointerup', ev => {
   obj.scale.setScalar(0.01);
   obj.userData.crescer = true;
   grupoBase.add(obj);
-  registrar(t('construiu', { nome: t(selecionado) }));
+  const tipoConstruido = selecionado;
+  registrar(() => t('construiu', { nome: t(tipoConstruido) }));
   if (!podeConstruir(estado, selecionado)) selecionado = null;
   atualizarFantasma();
   atualizarHUD();
@@ -309,18 +324,18 @@ document.getElementById('proximo').addEventListener('click', () => {
   for (const ev of eventos) {
     if (ev.tipo === 'aviso') {
       const e = ev.evento;
-      registrar(e.tipo === 'sep' ? t('regAvisoSEP', { sol: solAtual, origem: origem(e) })
+      registrar(() => e.tipo === 'sep' ? t('regAvisoSEP', { sol: solAtual, origem: origem(e) })
         : t('regAviso', { sol: solAtual, v: e.velocidade, n: e.qtdCMEs || 1, tipo: t(e.direto ? 'direto' : 'raspao'), chega: ev.chega, origem: origem(e) }), true);
       flash.color.set(0xfff2a8);
       flash.intensity = Math.max(flash.intensity, e.tipo === 'sep' || e.direto ? 3 : 1.6);
     } else if (ev.tipo === 'tempestade') {
-      registrar(t('regTempestade', { sol: solAtual, dose: ev.dose.toFixed(1), p: Math.round(ev.protecao * 100), abrigo: ev.abrigo ? t('regEmAbrigo') : '' }), true);
+      registrar(() => t('regTempestade', { sol: solAtual, dose: ev.dose.toFixed(1), p: Math.round(ev.protecao * 100), abrigo: ev.abrigo ? t('regEmAbrigo') : '' }), true);
       flash.color.set(0xff5030);
       flash.intensity = 3;
       curiosity.userData.rad.material.emissiveIntensity = 4;
     }
   }
-  if (!eventos.length) registrar(t('regCalmo', { sol: solAtual }));
+  if (!eventos.length) registrar(() => t('regCalmo', { sol: solAtual }));
   atualizarHUD();
   if (estado.fim) mostrarFim();
 });
@@ -328,7 +343,8 @@ document.getElementById('proximo').addEventListener('click', () => {
 document.getElementById('abrigo').addEventListener('click', () => {
   if (estado.fim) return;
   estado.abrigo = !estado.abrigo;
-  registrar(t(estado.abrigo ? 'regEntrou' : 'regSaiu'));
+  const chaveAbrigo = estado.abrigo ? 'regEntrou' : 'regSaiu';
+  registrar(() => t(chaveAbrigo));
   atualizarHUD();
 });
 
@@ -348,10 +364,13 @@ function mostrarFim() {
   document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3', 'fato4'].map(k => `<li>${t(k)}</li>`).join('');
   document.getElementById('fontes').innerHTML = FONTES.map(f => `<a href="${f.url}" target="_blank" rel="noopener">${f.rotulo}</a>`).join(' · ');
   document.getElementById('fim').hidden = false;
+  document.body.classList.add('em-debrief');
 }
 document.getElementById('idioma').addEventListener('click', () => {
   trocarIdioma();
+  elDica.hidden = true;   // a dica volta no idioma novo quando o mouse mexer
   montarTextosFixos();
+  redesenharRegistro();
   atualizarHUD();
   if (estado.fim) mostrarFim();
 });
@@ -359,10 +378,12 @@ document.getElementById('reiniciar').addEventListener('click', () => {
   estado = estadoInicial();
   grupoBase.clear();
   selecionado = null; fantasma = null;
+  entradas.length = 0;
   elRegistro.innerHTML = '';
   document.getElementById('fim').hidden = true;
-  registrar(t('novaMissao'));
-  registrar(t('cenario'));
+  document.body.classList.remove('em-debrief');
+  registrar(() => t('novaMissao'));
+  registrar(() => t('cenario'));
   atualizarHUD();
 });
 
@@ -393,14 +414,16 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
-registrar(t('cenario'));
-registrar(t('inicio'));
+registrar(() => t('cenario'));
+registrar(() => t('inicio'));
 atualizarHUD();
 carregarClimaEspacial().then(clima => {
-  fonteClima = clima.fonte;
+  fonteClima = clima.simulado ? null : clima.fonte;
+  climaSimulado = !!clima.simulado;
   calendario = montarCalendario(clima);
-  if (clima.simulado) registrar(t('simulado'), true);
-  else registrar(t('carregou', { n: clima.eventos.length, inicio: calendario.inicio }));
+  const nEventos = clima.eventos.length, inicioCal = calendario.inicio;
+  if (clima.simulado) registrar(() => t('simulado'), true);
+  else registrar(() => t('carregou', { n: nEventos, inicio: inicioCal }));
   atualizarHUD();
 });
 
