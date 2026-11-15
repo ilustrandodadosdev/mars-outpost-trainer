@@ -132,3 +132,10 @@ Pedido: "a escala do jogo na tela não está adaptada e as funcionalidades não 
 
 ## Publicação (15/11/2026)
 Com o OK do Rogenrique, a versão realista entrou na `main` (fast-forward até e4d378c) e foi publicada na Vercel pela linha de comando (`vercel deploy --prod`; a Vercel não publica sozinha a partir do GitHub). Conferido no ar no PC e no celular, sem erro no console. O vídeo de 30 s e os slides em /demo/ ainda mostram a versão anterior.
+
+## 1º sol como tutorial jogado + botão Início (15/11/2026)
+Pedidos: "a primeira lua deve servir de tutorial guiado, guiando o jogador e apresentando a jogabilidade" (entendido como o 1º sol) e "um botão de reiniciar o jogo e ida para a tela inicial onde escolhemos a missão".
+- **Tutorial jogado (10 passos):** boas-vindas → barras → *o jogador escolhe o Painel solar* → *constrói no chão* → "construído!" com custo e energia que sobrou → *passa o sol* → "Sol 2: veja o que mudou" (habitat = O₂, estufa = comida, painel = energia) → tempestades → diário → "agora é com você".
+- Nos passos de ação o balão não tem "Próximo": ele espera o jogador agir (aviso piscando "👉 toque..."). O jogo fica clicável e só o balão segura o clique; no passo de construir o escurecido some para o chão ficar à vista.
+- Não dá para voltar de um passo de ação (não se desfaz uma jogada). Se o jogador passar o sol antes da hora, o tutorial pula para "veja o que mudou". Reaberto pelo "?" sem energia, pula a parte de construir. Aceita qualquer módulo, mas sugere o painel solar.
+- **Botão ⌂ no topo:** reinicia e volta para a escolha da missão. No meio da partida pede um 2º toque ("Reiniciar? Toque de novo", 3 s) para ninguém perder a missão sem querer; no começo da partida vai direto.

@@ -278,6 +278,9 @@ function montarTextosFixos() {
   elBarras.innerHTML = BARRAS.map(b => `<div class="barra" data-id="${b.id}"><span>${t(b.id)}</span><div class="trilho"><div class="cheio"></div></div><span class="valor"></span></div>`).join('');
   // telas pequenas mostram só "⚡ custo" (.curto); o efeito completo fica na dica da ação e no title
   elModulos.innerHTML = Object.entries(MODULOS).map(([id, m]) => `<button data-id="${id}" aria-pressed="false" title="${t(id)} · ${t('custo', { n: m.custo })} · ${t(id + '_r')}"><b>${t(id)}</b><span class="longo">${t('custo', { n: m.custo })} · ${t(id + '_r')}</span><span class="curto">⚡ ${m.custo}</span></button>`).join('');
+  const elInicio = document.getElementById('inicio');
+  elInicio.textContent = t('btnInicio');
+  elInicio.title = elInicio.ariaLabel = t('inicioTitulo');
   const elAjuda = document.getElementById('ajuda');
   elAjuda.textContent = t('ajuda');
   elAjuda.title = elAjuda.ariaLabel = t('ajudaTitulo');
@@ -426,6 +429,7 @@ elModulos.addEventListener('click', e => {
   selecionado = selecionado === btn.dataset.id ? null : btn.dataset.id;
   atualizarFantasma();
   atualizarHUD();
+  tutEvento(selecionado ? 'selecionar' : 'cancelar');
 });
 addEventListener('keydown', e => { if (e.key === 'Escape') { selecionado = null; atualizarFantasma(); atualizarHUD(); } });
 
@@ -482,6 +486,7 @@ renderer.domElement.addEventListener('pointerup', ev => {
   if (!podeConstruir(estado, selecionado)) selecionado = null;
   atualizarFantasma();
   atualizarHUD();
+  tutEvento('construir', tipoConstruido);
 });
 
 // ---------- Próximo sol ----------
@@ -510,6 +515,7 @@ document.getElementById('proximo').addEventListener('click', () => {
   if (!eventos.length) registrar(() => t('regCalmo', { sol: solAtual }));
   atualizarHUD();
   if (estado.fim) mostrarFim();
+  tutEvento('sol');
 });
 
 document.getElementById('abrigo').addEventListener('click', () => {
@@ -546,11 +552,23 @@ document.getElementById('idioma').addEventListener('click', () => {
   atualizarHUD();
   if (estado.fim) mostrarFim();
 });
-document.getElementById('trocar').addEventListener('click', () => {
+function irParaInicio() {
   const u = new URL(location.href);
   u.searchParams.delete('missao');
+  u.searchParams.delete('tutorial');
   location.href = u;
-});
+}
+document.getElementById('trocar').addEventListener('click', irParaInicio);
+{
+  // no meio da partida pede um 2º toque, para ninguém perder a missão sem querer
+  const btn = document.getElementById('inicio');
+  let armado = null;
+  btn.addEventListener('click', () => {
+    if (armado || estado.sol <= 1 && !estado.modulos.length) return irParaInicio();
+    btn.textContent = t('inicioConfirma'); btn.classList.add('armado');
+    armado = setTimeout(() => { armado = null; btn.textContent = t('btnInicio'); btn.classList.remove('armado'); }, 3000);
+  });
+}
 document.getElementById('reiniciar').addEventListener('click', () => {
   estado = estadoInicial();
   grupoBase.clear();
@@ -610,42 +628,53 @@ carregarClimaEspacial().then(clima => {
 });
 
 // ---------- Tutorial guiado ----------
-// Abre sozinho na 1ª partida (fica lembrado no navegador) e volta pelo botão "?".
-// Os números vêm de regras.js, para o tutorial nunca contar uma regra diferente da do jogo.
+// O 1º sol é jogado junto com o tutorial: o jogador escolhe um módulo, constrói, passa o sol
+// e o balão explica cada efeito. Passos com `espera` só avançam quando o jogador faz a ação.
 const PASSOS = [
   { id: 1 },
   { id: 2, alvo: '#barras' },
-  { id: 3, alvo: '#modulos' },
-  { id: 4 },
-  { id: 5, alvo: '#proximo' },
-  { id: 6, alvo: '#aviso' },            // destaca o aviso se ele estiver na tela; senão, balão no meio
-  { id: 7, alvo: '#diario-btn' },
-  { id: 8, alvo: '#ajuda' },
+  { id: 3, alvo: '#modulos button[data-id="solar"]', espera: 'selecionar', pula: () => !temEnergia(), vaiPara: 6 },
+  { id: 4, espera: 'construir', topo: true },
+  { id: 5, alvo: '#barras' },
+  { id: 6, alvo: '#proximo', espera: 'sol' },
+  { id: 7, alvo: '#barras' },
+  { id: 8, alvo: '#aviso' },            // destaca o aviso se ele estiver na tela; senão, balão no meio
+  { id: 9, alvo: '#diario-btn' },
+  { id: 10, alvo: '#ajuda' },
 ];
 const elTut = document.getElementById('tutorial');
 const elRealce = document.getElementById('realce');
 const elBalao = document.getElementById('balao');
-let passoTut = 0;
+let passoTut = 0, construidoTut = null;
 const pct = v => Math.round(v * 100);
-function textoPasso(id) {
+function temEnergia() { return Object.keys(MODULOS).some(id => podeConstruir(estado, id)); }
+function varsPasso() {
   const lista = '<ul>' + Object.entries(MODULOS).map(([m, d]) => t('tutModulo', {
     nome: t(m), custo: d.custo, efeito: m === 'escudo' ? `${t('escudo_r')} (+${pct(REGRAS.protecaoPorEscudo)}%)` : t(m + '_r'),
   })).join('') + '</ul>';
-  return t('tut' + id, {
+  const c = construidoTut || 'solar';
+  return {
     sols: REGRAS.solsParaVencer, comida: REGRAS.consumoPorSol.comida, o2: REGRAS.consumoPorSol.oxigenio, lista,
     fora: pct(REGRAS.protecaoMaxForaDoAbrigo), base: pct(REGRAS.protecaoAbrigoBase), max: pct(REGRAS.protecaoMaxNoAbrigo), escudo: pct(REGRAS.protecaoPorEscudo),
-  });
+    nome: t(c), custo: MODULOS[c].custo, efeito: t(c + '_r'), energia: Math.round(estado.energia), n: Math.min(estado.sol, REGRAS.solsParaVencer),
+  };
 }
 function mostrarPasso() {
-  const p = PASSOS[passoTut], ultimo = passoTut === PASSOS.length - 1;
+  const p = PASSOS[passoTut], ultimo = passoTut === PASSOS.length - 1, v = varsPasso();
+  const anteriorAgiu = passoTut > 0 && PASSOS[passoTut - 1].espera;
   document.getElementById('tut-passo').textContent = t('tutPasso', { i: passoTut + 1, n: PASSOS.length });
-  document.getElementById('tut-titulo').textContent = t('tut' + p.id + 't');
-  document.getElementById('tut-texto').innerHTML = textoPasso(p.id);
+  document.getElementById('tut-titulo').textContent = t('tut' + p.id + 't', v);
+  document.getElementById('tut-texto').innerHTML = t('tut' + p.id, v) + (p.espera ? `<p class="espera">${t('tutEspera_' + p.espera)}</p>` : '');
   document.getElementById('tut-pular').textContent = t('tutPular');
   document.getElementById('tut-pular').hidden = ultimo;
   document.getElementById('tut-voltar').textContent = t('tutVoltar');
-  document.getElementById('tut-voltar').hidden = passoTut === 0;
+  // não dá para "desfazer" uma ação do jogo, então não volta para trás de um passo de ação
+  document.getElementById('tut-voltar').hidden = passoTut === 0 || !!p.espera || !!anteriorAgiu;
   document.getElementById('tut-proximo').textContent = ultimo ? t('tutFim') : t('tutProximo') + ' ▶';
+  document.getElementById('tut-proximo').hidden = !!p.espera;
+  // nos passos de ação o jogo fica clicável; só o balão segura o clique
+  elTut.classList.toggle('agindo', !!p.espera);
+  elBalao.setAttribute('aria-modal', String(!p.espera));
   posicionarPasso();
 }
 function posicionarPasso() {
@@ -656,6 +685,7 @@ function posicionarPasso() {
   const W = innerWidth, H = innerHeight, m = 10, folga = 6;
   const bw = elBalao.offsetWidth, bh = elBalao.offsetHeight;
   let x, y;
+  elRealce.classList.toggle('livre', !!p.topo);
   if (r && r.width) {
     elRealce.classList.remove('sem-alvo');
     Object.assign(elRealce.style, { left: r.left - folga + 'px', top: r.top - folga + 'px', width: r.width + 2 * folga + 'px', height: r.height + 2 * folga + 'px' });
@@ -667,32 +697,53 @@ function posicionarPasso() {
     else y = (H - bh) / 2;
     x = r.left + r.width / 2 - bw / 2;
     // sem espaço em cima nem embaixo: balão ao lado do alvo
-    if (baixo < bh + 2 * m && cima < bh + 2 * m) x = r.left > W - r.right ? r.left - folga - m - bw : r.right + folga + m;
+    if (!cabeBaixo && !cabeCima) x = r.left > W - r.right ? r.left - folga - m - bw : r.right + folga + m;
   } else {
     elRealce.classList.add('sem-alvo');
     Object.assign(elRealce.style, { left: W / 2 + 'px', top: H / 2 + 'px', width: '0px', height: '0px' });
-    x = (W - bw) / 2; y = (H - bh) / 2;
+    x = (W - bw) / 2;
+    // passo de construir: balão logo abaixo do topo, deixando o chão livre para o clique
+    const topoH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topo-h')) || 0;
+    y = p.topo ? topoH + 2 * m : (H - bh) / 2;
   }
   elBalao.style.left = Math.max(m, Math.min(W - bw - m, x)) + 'px';
   elBalao.style.top = Math.max(m, Math.min(H - bh - m, y)) + 'px';
 }
 function abrirTutorial() {
+  if (estado.fim) return;
   selecionado = null; atualizarFantasma(); atualizarHUD();
   elDica.hidden = true;
-  passoTut = 0;
+  passoTut = 0; construidoTut = null;
   elTut.hidden = false;
   mostrarPasso();
   document.getElementById('tut-proximo').focus();
 }
 function fecharTutorial() {
   elTut.hidden = true;
+  elTut.classList.remove('agindo');
   try { localStorage.setItem('tutorialVisto', '1'); } catch {}
 }
-function irPasso(d) {
-  const n = passoTut + d;
-  if (n >= PASSOS.length) return fecharTutorial();
-  passoTut = Math.max(0, n);
+function irPara(i) {
+  if (i >= PASSOS.length) return fecharTutorial();
+  passoTut = Math.max(0, i);
+  // reaberto pelo "?" sem energia: pula a parte de construir
+  const p = PASSOS[passoTut];
+  if (p.pula && p.pula()) passoTut = PASSOS.findIndex(q => q.id === p.vaiPara);
   mostrarPasso();
+}
+function irPasso(d) { irPara(passoTut + d); }
+// o jogo avisa o tutorial quando o jogador age
+function tutEvento(tipo, dado) {
+  if (elTut.hidden) return;
+  if (estado.fim) return fecharTutorial();
+  // no tutorial, depois de construir o módulo sai da mão, para o fantasma não ficar na tela
+  if (tipo === 'construir') { construidoTut = dado; selecionado = null; atualizarFantasma(); atualizarHUD(); }
+  const p = PASSOS[passoTut];
+  if (p.espera === tipo) return irPasso(1);
+  // passou o sol antes da hora (ex.: no passo de escolher): segue a partir do "veja o que mudou"
+  const iSol = PASSOS.findIndex(q => q.espera === 'sol');
+  if (tipo === 'sol' && passoTut < iSol) return irPara(iSol + 1);
+  if (p.espera) mostrarPasso();   // ex.: cancelou o módulo; redesenha o texto
 }
 document.getElementById('tut-proximo').addEventListener('click', () => irPasso(1));
 document.getElementById('tut-voltar').addEventListener('click', () => irPasso(-1));
@@ -700,9 +751,10 @@ document.getElementById('tut-pular').addEventListener('click', fecharTutorial);
 document.getElementById('ajuda').addEventListener('click', abrirTutorial);
 addEventListener('keydown', e => {
   if (elTut.hidden) return;
-  if (e.key === 'Escape') fecharTutorial();
-  else if (e.key === 'ArrowRight') irPasso(1);
-  else if (e.key === 'ArrowLeft') irPasso(-1);
+  const p = PASSOS[passoTut];
+  if (e.key === 'Escape' && !p.espera) fecharTutorial();
+  else if (e.key === 'ArrowRight' && !p.espera) irPasso(1);
+  else if (e.key === 'ArrowLeft' && !document.getElementById('tut-voltar').hidden) irPasso(-1);
 });
 addEventListener('resize', () => { if (!elTut.hidden) posicionarPasso(); });
 {

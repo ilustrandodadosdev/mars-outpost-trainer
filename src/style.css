@@ -163,4 +163,11 @@ body.em-debrief .topo { z-index: 6; }
 .tut-botoes button { font: inherit; font-size: .9rem; color: var(--texto); background: rgba(255,255,255,.06); border: 1px solid var(--borda); border-radius: 10px; padding: .5rem .85rem; cursor: pointer; }
 .tut-botoes button.secundario { background: transparent; }
 .tut-botoes button[hidden] { display: none; }
+/* passos de ação: o jogo fica clicável, só o balão segura o clique */
+.tutorial.agindo { pointer-events: none; }
+.tutorial.agindo .balao { pointer-events: auto; }
+.realce.livre, .realce.livre.sem-alvo { border-color: transparent; box-shadow: none; }
+.balao .espera { margin-top: .7rem; padding: .45rem .6rem; border-radius: 8px; background: rgba(255, 138, 80, .14); color: var(--acento); font-weight: 700; animation: piscar 1.6s ease-in-out infinite; }
+@keyframes piscar { 50% { opacity: .55; } }
+.idioma.armado { background: #ffd9c9; color: #3a0f06; }
 #tut-proximo { background: var(--acento); color: #25120a; font-weight: 700; border: 0; }
