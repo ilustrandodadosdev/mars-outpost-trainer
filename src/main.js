@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual } from './regras.js';
+import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual, avaliarMetas, METAS } from './regras.js';
 import { carregarClimaEspacial, montarCalendario } from './donki.js';
 import { t, trocarIdioma, idioma, fontes, definirMissao } from './textos.js';
 import { MISSOES, missaoDaURL } from './missoes.js';
@@ -269,6 +269,24 @@ let selecionado = null;
 let calendario = { porSol: () => [], dataDoSol: null };
 let fonteClima = null;
 let climaSimulado = false;
+let temSEP = true;   // vira false se o calendário real não trouxer a tempestade de 20/05/2024
+
+// ---------- Metas da missão ----------
+const ICONE_META = { ok: '✅', andamento: '⏳', falhou: '❌', na: '➖' };
+const metas = () => avaliarMetas(estado, MISSAO.metas, temSEP);
+const textoMeta = m => t('meta_' + m.id, { sols: REGRAS.solsParaVencer, max: METAS.radiacaoMax, min: METAS.o2Min, ...m.vars });
+function listaMetas(comProgresso) {
+  return '<ul class="lista-metas">' + metas().map(m => {
+    const prog = m.status === 'na' ? t('metaNA') : comProgresso && m.status === 'andamento' && m.id !== 'sep' ? t('metaProg_' + m.id, { sols: REGRAS.solsParaVencer, n: Math.min(estado.sol, REGRAS.solsParaVencer), max: METAS.radiacaoMax, min: METAS.o2Min, ...m.vars }) : '';
+    return `<li data-status="${m.status}">${ICONE_META[m.status]} ${textoMeta(m)}${prog ? ` <small>(${prog})</small>` : ''}</li>`;
+  }).join('') + '</ul>';
+}
+function atualizarMetas() {
+  const ms = metas().filter(m => m.status !== 'na');
+  const el = document.getElementById('metas');
+  el.querySelector('summary').textContent = t('metasHUD', { n: ms.filter(m => m.status === 'ok').length, total: ms.length });
+  el.querySelector('div').innerHTML = listaMetas(true);
+}
 const ocupado = () => new Set(estado.modulos.map(m => `${m.x},${m.z}`));
 
 const elBarras = document.getElementById('barras');
@@ -421,6 +439,7 @@ function atualizarHUD() {
     btn.setAttribute('aria-pressed', String(btn.dataset.id === selecionado));
   }
   document.getElementById('proximo').disabled = !!estado.fim;
+  atualizarMetas();
 }
 
 elModulos.addEventListener('click', e => {
@@ -538,6 +557,19 @@ function mostrarFim() {
     evitada === null ? null : t('resumoEvitada', { p: evitada }),
     t('resumoAbrigo', { n: s.solsNoAbrigo }),
   ].filter(Boolean).map(x => `<li>${x}</li>`).join('');
+  // missão real × sua partida: cada meta com o resultado simulado ao lado do dado real da NASA
+  const ms = metas(), validas = ms.filter(m => m.status !== 'na'), feitas = validas.filter(m => m.status === 'ok').length;
+  document.getElementById('perfeita').innerHTML = feitas === validas.length ? t('perfeita') : t('metasFeitas', { n: feitas, total: validas.length });
+  document.getElementById('perfeita').classList.toggle('ouro', feitas === validas.length);
+  document.getElementById('compara-titulo').textContent = t('comparaTitulo');
+  document.getElementById('compara').innerHTML = ms.map(m => {
+    const chave = m.id !== 'sep' ? 'metaVoce_' + m.id
+      : m.status === 'na' ? 'metaVoce_sep_na' : !estado.stats.sep ? 'metaVoce_sep_nao' : estado.stats.sep.abrigo ? 'metaVoce_sep_ok' : 'metaVoce_sep_fora';
+    return `<li data-status="${m.status}"><b>${ICONE_META[m.status]} ${textoMeta(m)}</b>`
+      + `<span class="voce"><em>${t('compVoce')}</em> ${t(chave, { sols: REGRAS.solsParaVencer, ...m.vars })}</span>`
+      + `<span class="real"><em>${t('compReal')}</em> ${t('metaReal_' + m.id)}</span></li>`;
+  }).join('');
+  document.getElementById('compara-nota').textContent = t('compNota');
   document.getElementById('aprendeu-titulo').textContent = t('aprendeuTitulo');
   document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3', 'fato4', 'fato5'].map(k => `<li>${t(k)}</li>`).join('');
   document.getElementById('fontes').innerHTML = fontes().map(f => `<a href="${f.url}" target="_blank" rel="noopener">${f.rotulo}</a>`).join(' · ');
@@ -620,6 +652,7 @@ atualizarHUD();
 carregarClimaEspacial().then(clima => {
   fonteClima = clima.simulado ? null : clima.fonte;
   climaSimulado = !!clima.simulado;
+  temSEP = clima.eventos.some(e => e.tipo === 'sep');
   calendario = montarCalendario(clima);
   const nEventos = clima.eventos.length, inicioCal = calendario.inicio;
   if (clima.simulado) registrar(() => t('simulado'), true);
@@ -656,6 +689,7 @@ function varsPasso() {
   return {
     sols: REGRAS.solsParaVencer, comida: REGRAS.consumoPorSol.comida, o2: REGRAS.consumoPorSol.oxigenio, lista,
     fora: pct(REGRAS.protecaoMaxForaDoAbrigo), base: pct(REGRAS.protecaoAbrigoBase), max: pct(REGRAS.protecaoMaxNoAbrigo), escudo: pct(REGRAS.protecaoPorEscudo),
+    metas: t('metasTut', { metas: listaMetas(false) }),
     nome: t(c), custo: MODULOS[c].custo, efeito: t(c + '_r'), energia: Math.round(estado.energia), n: Math.min(estado.sol, REGRAS.solsParaVencer),
   };
 }

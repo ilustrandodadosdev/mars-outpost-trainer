@@ -139,3 +139,16 @@ Pedidos: "a primeira lua deve servir de tutorial guiado, guiando o jogador e apr
 - Nos passos de ação o balão não tem "Próximo": ele espera o jogador agir (aviso piscando "👉 toque..."). O jogo fica clicável e só o balão segura o clique; no passo de construir o escurecido some para o chão ficar à vista.
 - Não dá para voltar de um passo de ação (não se desfaz uma jogada). Se o jogador passar o sol antes da hora, o tutorial pula para "veja o que mudou". Reaberto pelo "?" sem energia, pula a parte de construir. Aceita qualquer módulo, mas sugere o painel solar.
 - **Botão ⌂ no topo:** reinicia e volta para a escolha da missão. No meio da partida pede um 2º toque ("Reiniciar? Toque de novo", 3 s) para ninguém perder a missão sem querer; no começo da partida vai direto.
+
+## Metas por missão e "Missão real × sua partida" (15/11/2026)
+
+Pedido do Rogenrique: deixar claro o objetivo de cada missão e o que é a partida perfeita.
+
+- Cada missão tem 3 metas (`MISSOES[...].metas` em `src/missoes.js`; avaliação em `avaliarMetas`, `src/regras.js`):
+  - **Curiosity (RAD, radiação):** sobreviver 30 sols · estar no abrigo quando chegar a tempestade de partículas de 20/05/2024 (sol 30) · terminar com radiação abaixo de 50.
+  - **Perseverance (MOXIE, oxigênio):** sobreviver 30 sols · produzir 150 de O₂ (habitats + estufas) · estar no abrigo na tempestade de 20/05/2024.
+- As metas aparecem no passo 1 do tutorial, numa linha recolhível "🎯 Metas n/3" no topo (com progresso) e na tela de escolha ("Desafio").
+- O debrief abre com "Missão real × sua partida": para cada meta, o resultado do jogador marcado **Você (simulação)** e o dado da NASA marcado **NASA (real)**. Cumprir todas = "Partida perfeita".
+- Limites (50 de radiação, 150 de O₂) são de jogo, em `METAS`. Com abrigo nas tempestades e 3 escudos dá para cumprir tudo. Sem abrigo, a radiação termina perto de 94 e a meta falha.
+- Dados reais usados (todos já com fonte no debrief): 8.100 µGy em 20/05/2024 (NASA 2024), cerca de 0,21 mGy/dia (Hassler et al. 2014), MOXIE 122 g de O₂ em 2021–2023 (NASA 2023), pousos em ago/2012 e fev/2021.
+- Sem dado real carregado (calendário simulado), a meta da tempestade fica "sem dado real" e sai da contagem.

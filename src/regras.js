@@ -32,7 +32,7 @@ export const REGRAS = {
 
 export function estadoInicial() {
   return { sol: 1, energia: 60, comida: 40, oxigenio: 40, radiacao: 0, modulos: [], alertas: [], abrigo: false, fim: null,
-           stats: { tempestades: 0, doseBruta: 0, doseRecebida: 0, solsNoAbrigo: 0 } };
+           stats: { tempestades: 0, doseBruta: 0, doseRecebida: 0, solsNoAbrigo: 0, o2Produzido: 0, sep: null } };
 }
 
 const limitar = v => Math.max(0, Math.min(100, v));
@@ -72,6 +72,7 @@ export function avancarSol(estado, avisos = []) {
     if (estado.abrigo && mod.paraNoAbrigo) continue;
     for (const [k, v] of Object.entries(mod.efeito)) if (k in soma) soma[k] += v;
   }
+  estado.stats.o2Produzido += Math.max(0, soma.oxigenio);
   estado.energia  = limitar(estado.energia + soma.energia);
   estado.comida   = limitar(estado.comida + soma.comida - REGRAS.consumoPorSol.comida);
   estado.oxigenio = limitar(estado.oxigenio + soma.oxigenio - REGRAS.consumoPorSol.oxigenio);
@@ -85,6 +86,7 @@ export function avancarSol(estado, avisos = []) {
     estado.stats.tempestades += 1;
     estado.stats.doseBruta += a.dose;
     estado.stats.doseRecebida += d;
+    if (a.evento.tipo === 'sep') estado.stats.sep = { abrigo: estado.abrigo, dose: d, bruta: a.dose };
     eventos.push({ tipo: 'tempestade', evento: a.evento, dose: d, abrigo: estado.abrigo, protecao });
   }
   estado.alertas = estado.alertas.filter(a => a.chega > sol);
@@ -104,4 +106,33 @@ export function avancarSol(estado, avisos = []) {
   else if (estado.radiacao >= 100) estado.fim = { venceu: false, motivo: 'fimRadiacao' };
   else if (estado.sol > REGRAS.solsParaVencer) estado.fim = { venceu: true, motivo: 'fimVenceu' };
   return eventos;
+}
+
+// ---------- Metas da missão ----------
+// Cada missão tem metas ligadas ao que o rover real fez (lista em missoes.js). Os limites são de jogo.
+export const METAS = { radiacaoMax: 50, o2Min: 150 };
+
+// Devolve [{ id, status: 'ok' | 'andamento' | 'falhou' | 'na', vars }]. 'na' = sem o dado real (calendário simulado).
+export function avaliarMetas(estado, ids, temSEP) {
+  const f = estado.fim, s = estado.stats;
+  const sols = REGRAS.solsParaVencer;
+  return ids.map(id => {
+    if (id === 'sobreviver') return { id, status: f ? (f.venceu ? 'ok' : 'falhou') : 'andamento',
+      vars: { n: Math.min(estado.sol - (f ? 1 : 0), sols), sols } };
+    if (id === 'radiacao') {
+      const v = Math.round(estado.radiacao);
+      return { id, status: v >= METAS.radiacaoMax ? 'falhou' : f ? (f.venceu ? 'ok' : 'falhou') : 'andamento', vars: { v, max: METAS.radiacaoMax } };
+    }
+    if (id === 'o2') {
+      const v = Math.round(s.o2Produzido);
+      return { id, status: v >= METAS.o2Min ? 'ok' : f ? 'falhou' : 'andamento', vars: { v, min: METAS.o2Min } };
+    }
+    if (id === 'sep') {
+      if (!temSEP) return { id, status: 'na', vars: {} };
+      const e = s.sep;
+      if (!e) return { id, status: f ? 'falhou' : 'andamento', vars: {} };
+      return { id, status: e.abrigo ? 'ok' : 'falhou',
+        vars: { d: e.dose.toFixed(1), b: e.bruta.toFixed(0), p: Math.round((1 - e.dose / e.bruta) * 100) } };
+    }
+  });
 }
