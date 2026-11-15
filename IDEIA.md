@@ -43,3 +43,38 @@ O Claude apresentou opções; o Rogenrique aceitou o pacote abaixo, mirando a pr
 - O registro de eventos do jogo agora muda de idioma junto com o resto da tela; antes as linhas antigas ficavam no idioma em que foram escritas.
 - O botão EN/PT funciona também na tela final (antes ficava coberto pela camada escura).
 - A linha da fonte dos dados e o aviso de dados simulados também foram traduzidos. Só os títulos das fontes citadas ficam no idioma original, como em qualquer referência.
+
+## Versão realista: branch `versao-realista` (15/11/2026)
+
+Rogenrique: "vamos criar uma nova branch e trabalhar em uma versão mais realista possivel para ser rodada direto do navegador seja de computadores ou celulares!"
+
+**Regra da branch:** a `main` é a versão inscrita. Ela fica intacta, e a Vercel continua publicando a `main`. A realista só entra na `main` se ficar pronta e testada no PC e no celular antes do prazo (15/11/2026 23:59). Se não ficar, ela segue como evolução depois do hackathon.
+
+Plano, por ordem de ganho visual por hora de trabalho:
+
+1. **Terreno real da cratera Gale**
+   - Trocar o relevo gerado por um recorte de DEM do Mars Trek/HiRISE da região do Curiosity. Antes de usar, confirmar a disponibilidade e a licença do recorte.
+   - Converter o recorte para heightmap PNG de 16 bits em 256×256 no PC e 128×128 no celular.
+   - Citar a fonte no rodapé, como já é feito com o DONKI.
+2. **Luz e material físicos**
+   - Usar MeshStandardMaterial com textura de solo marciano (albedo e normal map gerados por nós ou de domínio público).
+   - Sol baixo com sombra suave, céu cor de caramelo de dia e azulado no pôr do sol (fato observado pelo Curiosity).
+   - Névoa de poeira que engrossa durante a tempestade.
+3. **Clima visível**
+   - Partículas de poeira durante a tempestade.
+   - Escurecimento do céu proporcional ao evento real do DONKI.
+   - Painéis solares rendendo menos sob poeira, já ligados às regras.
+4. **Celular de verdade**
+   - Toque para construir, pinça para zoom, arrastar para girar a câmera.
+   - Botões de pelo menos 44 px e HUD que se reorganiza na vertical.
+   - `devicePixelRatio` limitado a 2.
+5. **Desempenho**
+   - Detectar aparelho fraco e reduzir sombras, partículas e malha.
+   - Meta: 30 fps num celular intermediário e 60 fps no PC.
+   - Carregar tudo do próprio site, sem servidor.
+6. **Teste**
+   - Playwright em viewport de celular (390×844, toque) e de PC.
+   - Teste bilíngue repetido.
+   - Partida completa sem erro no console.
+
+O que não muda: dados reais do DONKI, regra de nunca apresentar dado simulado como real, bilinguismo e o texto do registro.
