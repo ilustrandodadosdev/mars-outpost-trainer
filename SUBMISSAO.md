@@ -23,9 +23,8 @@ Mars Outpost Trainer is a free browser game for students aged 10–14. Players r
 
 ## Link to Project Demo
 
-- 30-second video: https://mars-outpost-trainer.vercel.app/demo/demo.mp4
-- Demo page (video + slides): https://mars-outpost-trainer.vercel.app/demo/
-- 7 slides: https://mars-outpost-trainer.vercel.app/demo/slides.pdf
+- 30-second video (plays in the browser): https://mars-outpost-trainer.vercel.app/demo/
+- 7 slides (PDF): https://mars-outpost-trainer.vercel.app/demo/slides.pdf
 
 ## Link to Final Project
 
