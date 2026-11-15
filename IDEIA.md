@@ -87,3 +87,12 @@ O que não muda: dados reais do DONKI, regra de nunca apresentar dado simulado c
 - **Exagero vertical de 2×**, declarado na lista de fontes do jogo e no README. Em escala real a planície fica lisa demais para ler na tela.
 - **Base:** praça nivelada no centro, como já era. As pedras são decorativas e diminuíram para combinar com a escala.
 - **Achado para a etapa 4:** no celular em pé, a câmera fica colada na grade e o HUD cobre metade da tela. Isso já era assim na `main`.
+
+### Etapa 2 feita: luz e solo (15/11/2026)
+- **Céu:** shader próprio em `src/visual.js`. Do zênite ao horizonte o céu vai em caramelo, com halo azulado perto do Sol baixo, que é o pôr do sol fotografado pelo Curiosity em Gale (NASA/JPL PIA19400).
+  - Tem uniforme `poeira` (0 = limpo, 1 = tempestade) reservado para a etapa 3.
+- **Sol:** fim de tarde a oeste-sudoeste, ~22° acima do horizonte, então as sombras ficam longas.
+  - Tone mapping ACES, exposição 1,3.
+  - Mapa de sombra 2048 no PC e 1024 no celular.
+- **Solo:** textura de regolito e normal map gerados no navegador, sem baixar imagem (poeira, cascalho e pedrinhas). A textura é de 512 px no PC e 256 px no celular.
+- **Testado:** PC e celular sem erro de console; partida inteira em EN e PT.

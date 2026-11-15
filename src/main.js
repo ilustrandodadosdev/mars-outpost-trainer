@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual } from './regras.js';
 import { carregarClimaEspacial, montarCalendario } from './donki.js';
 import { t, trocarIdioma, idioma, FONTES } from './textos.js';
+import { criarCeu, criarTexturasSolo, CORES_CEU } from './visual.js';
 
 // ---------- Cena ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -10,12 +11,17 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.3;
 document.getElementById('cena').appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-const CEU = new THREE.Color(0xd8a07a);
-scene.background = CEU;
-scene.fog = new THREE.Fog(CEU, 35, 85);
+// Fim de tarde em Gale: Sol baixo a oeste-sudoeste, a ~22° do horizonte (sombras longas, halo azulado perto dele)
+const DIR_SOL = new THREE.Vector3(-0.8, 0.37, -0.45).normalize();
+scene.background = CORES_CEU.horizonte;
+scene.fog = new THREE.Fog(CORES_CEU.horizonte, 30, 95);
+const ceu = criarCeu(DIR_SOL);
+scene.add(ceu);
 
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200);
 camera.position.set(8.5, 8, 10);
@@ -28,12 +34,15 @@ controls.maxDistance = 36;
 controls.minPolarAngle = 0.3;
 controls.maxPolarAngle = 1.42;
 
-scene.add(new THREE.HemisphereLight(0xffe0c0, 0x6a3420, 2.2));
-const sol = new THREE.DirectionalLight(0xfff0dc, 3.2);
-sol.position.set(18, 28, 8);
+scene.add(new THREE.HemisphereLight(0xe8b890, 0x5a2c1a, 1.4));
+const sol = new THREE.DirectionalLight(0xfff1e0, 3.4);
+sol.position.copy(DIR_SOL).multiplyScalar(45);
 sol.castShadow = true;
-sol.shadow.mapSize.set(2048, 2048);
-Object.assign(sol.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 80 });
+const CEL_SOMBRA = matchMedia('(pointer: coarse)').matches;
+sol.shadow.mapSize.set(CEL_SOMBRA ? 1024 : 2048, CEL_SOMBRA ? 1024 : 2048);
+sol.shadow.bias = -0.0004;
+sol.shadow.normalBias = 0.02;
+Object.assign(sol.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 110 });
 scene.add(sol);
 
 // ---------- Terreno: relevo real da cratera Gale (USGS, MSL Gale Merged DEM 1 m) ----------
@@ -98,7 +107,9 @@ for (let i = 0; i < pos.count; i++) pos.setY(i, altura(pos.getX(i), pos.getZ(i))
 const terrenoGeo = relevo ? geo : geo.toNonIndexed();
 terrenoGeo.computeVertexNormals();
 const cores = [];
-const c1 = new THREE.Color(0x9c4a26), c2 = new THREE.Color(0xc9773f), c3 = new THREE.Color(0x5e3220), cTmp = new THREE.Color();
+// tons do regolito de Gale nas fotos do Curiosity: castanho-caramelo, rocha mais escura nas encostas
+const c1 = relevo ? new THREE.Color(0xa0643f) : new THREE.Color(0x9c4a26), c2 = relevo ? new THREE.Color(0xc89064) : new THREE.Color(0xc9773f);
+const c3 = new THREE.Color(0x6a4330), cTmp = new THREE.Color();
 const tp = terrenoGeo.attributes.position, tn = terrenoGeo.attributes.normal;
 if (relevo) {
   // cor por vértice: poeira clara no plano, rocha escura nas encostas, tom mais claro no alto do monte
@@ -116,7 +127,12 @@ if (relevo) {
   }
 }
 terrenoGeo.setAttribute('color', new THREE.Float32BufferAttribute(cores, 3));
-const terreno = new THREE.Mesh(terrenoGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: !relevo, roughness: 1 }));
+const solo = criarTexturasSolo(renderer, CELULAR);
+for (const tx of [solo.map, solo.normalMap]) tx.repeat.set(48, 48);   // um ladrilho = ~170 m
+const terreno = new THREE.Mesh(terrenoGeo, new THREE.MeshStandardMaterial({
+  vertexColors: true, flatShading: !relevo, roughness: 0.95,
+  map: solo.map, normalMap: solo.normalMap, normalScale: new THREE.Vector2(0.9, 0.9),
+}));
 terreno.receiveShadow = true;
 scene.add(terreno);
 
@@ -439,6 +455,7 @@ addEventListener('resize', () => {
 });
 renderer.setAnimationLoop(() => {
   controls.update();
+  ceu.position.copy(camera.position);
   for (const o of grupoBase.children) {
     if (o.userData.crescer) {
       const s = Math.min(1, o.scale.x + 0.08);
