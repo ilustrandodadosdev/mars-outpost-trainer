@@ -157,6 +157,7 @@ function corBarra(v, ruimAlto) {
   return ruim > 0.7 ? 'var(--ruim)' : ruim > 0.45 ? '#ffc14d' : 'var(--ok)';
 }
 
+const nomeEvento = e => e.tipo === 'sep' ? t('nomeSEP') : t('nomeCME', { v: e.velocidade });
 function atualizarHUD() {
   for (const b of BARRAS) {
     const el = elBarras.querySelector(`[data-id="${b.id}"]`);
@@ -181,7 +182,7 @@ function atualizarHUD() {
     elAviso.hidden = false;
     elAviso.classList.remove('calmo');
     document.getElementById('aviso-texto').innerHTML =
-      (faltam === 0 ? t('avisoHoje', { classe: proxima.flare.classe }) : t('avisoEm', { classe: proxima.flare.classe, n: faltam + 1 })) + ' ' +
+      (faltam === 0 ? t('avisoHoje', { classe: nomeEvento(proxima.evento) }) : t('avisoEm', { classe: nomeEvento(proxima.evento), n: faltam + 1 })) + ' ' +
       t(estado.abrigo ? 'tripDentro' : 'tripFora', { p: pct });
   } else if (estado.abrigo) {
     elAviso.hidden = false;
@@ -264,21 +265,20 @@ scene.add(flash);
 document.getElementById('proximo').addEventListener('click', () => {
   if (estado.fim) return;
   const solAtual = estado.sol;
-  const flares = calendario.porSol(solAtual);
-  const eventos = avancarSol(estado, flares);
-  const origem = f => f.simulado ? t('origemSim')
-    : t('origemReal', { data: f.data }) + (f.link ? ` · <a href="${f.link}" target="_blank" rel="noopener">${t('fonte')}</a>` : '');
+  const eventos = avancarSol(estado, calendario.porSol(solAtual));
+  const origem = e => e.simulado ? t('origemSim')
+    : t('origemReal', { data: e.saiu }) + (e.link ? ` · <a href="${e.link}" target="_blank" rel="noopener">${t('fonte')}</a>` : '');
   for (const ev of eventos) {
     if (ev.tipo === 'aviso') {
-      registrar(t('regAviso', { sol: solAtual, classe: ev.flare.classe, origem: origem(ev.flare) }), true);
+      const e = ev.evento;
+      registrar(e.tipo === 'sep' ? t('regAvisoSEP', { sol: solAtual, origem: origem(e) })
+        : t('regAviso', { sol: solAtual, v: e.velocidade, n: e.qtdCMEs || 1, tipo: t(e.direto ? 'direto' : 'raspao'), chega: ev.chega, origem: origem(e) }), true);
       flash.color.set(0xfff2a8);
-      flash.intensity = Math.max(flash.intensity, ev.flare.classe[0] === 'X' ? 3 : 1.6);
+      flash.intensity = Math.max(flash.intensity, e.tipo === 'sep' || e.direto ? 3 : 1.6);
     } else if (ev.tipo === 'tempestade') {
       registrar(t('regTempestade', { sol: solAtual, dose: ev.dose.toFixed(1), p: Math.round(ev.protecao * 100), abrigo: ev.abrigo ? t('regEmAbrigo') : '' }), true);
       flash.color.set(0xff5030);
       flash.intensity = 3;
-    } else if (ev.tipo === 'menor') {
-      registrar(t('regMenor', { sol: solAtual, classe: ev.flare.classe, origem: origem(ev.flare) }));
     }
   }
   if (!eventos.length) registrar(t('regCalmo', { sol: solAtual }));
@@ -351,6 +351,6 @@ carregarClimaEspacial().then(clima => {
   fonteClima = clima.fonte;
   calendario = montarCalendario(clima);
   if (clima.simulado) registrar(t('simulado'), true);
-  else registrar(t('carregou', { n: clima.flares.length, fonte: fonteClima, inicio: calendario.inicio }));
+  else registrar(t('carregou', { n: clima.eventos.length, inicio: calendario.inicio }));
   atualizarHUD();
 });

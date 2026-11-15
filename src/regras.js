@@ -20,8 +20,10 @@ export const REGRAS = {
   solsParaVencer: 30,
   consumoPorSol: { comida: 4, oxigenio: 4 },
   radiacaoDeFundo: 0.6,                    // dose por sol, sol calmo
-  doseTempestade: { X: 14, M: 5 },         // classe da explosão → dose da tempestade de partículas (× magnitude, até 3×)
-  atrasoSols: { X: 1, M: 2 },              // simplificação: a luz da explosão chega na hora, as partículas depois
+  // Dose de jogo por evento real (ajuste de jogabilidade; a escala segue a força prevista pela NASA):
+  doseCMERaspao: 2,                        // CME que só raspa Marte: 2 + velocidade/400
+  doseCMEDireta: 4,                        // CME direta: 4 × (velocidade/500), entre 1× e 4×
+  doseSEP: 25,                             // 20/05/2024: 8.100 µGy medidos pelo Curiosity, o maior desde o pouso
   protecaoPorEscudo: 0.1,
   protecaoMaxForaDoAbrigo: 0.4,
   protecaoAbrigoBase: 0.5,
@@ -44,10 +46,11 @@ export function construir(estado, tipo, x, z) {
   estado.modulos.push({ tipo, x, z });
 }
 
-export function doseDaTempestade(classe) {
-  const base = REGRAS.doseTempestade[classe?.[0]] ?? 0;
-  const fator = parseFloat(classe.slice(1)) || 1;   // ex.: M2.4 → 2.4
-  return base * Math.min(Math.max(fator, 1), 3);
+export function doseDoEvento(e) {
+  if (e.tipo === 'sep') return REGRAS.doseSEP;
+  return e.direto
+    ? REGRAS.doseCMEDireta * Math.min(Math.max(e.velocidade / 500, 1), 4)
+    : REGRAS.doseCMERaspao + e.velocidade / 400;
 }
 
 export function protecaoAtual(estado) {
@@ -57,8 +60,8 @@ export function protecaoAtual(estado) {
     : Math.min(REGRAS.protecaoMaxForaDoAbrigo, escudos * REGRAS.protecaoPorEscudo);
 }
 
-// Avança um sol. `flares` = explosões solares vistas neste sol (reais do NASA DONKI, ou simuladas se não houver dado).
-export function avancarSol(estado, flares = []) {
+// Avança um sol. `avisos` = eventos de clima espacial detectados neste sol (reais do NASA DONKI, ou simulados).
+export function avancarSol(estado, avisos = []) {
   const eventos = [];
   const sol = estado.sol;
 
@@ -82,19 +85,17 @@ export function avancarSol(estado, flares = []) {
     estado.stats.tempestades += 1;
     estado.stats.doseBruta += a.dose;
     estado.stats.doseRecebida += d;
-    eventos.push({ tipo: 'tempestade', flare: a.flare, dose: d, abrigo: estado.abrigo, protecao });
+    eventos.push({ tipo: 'tempestade', evento: a.evento, dose: d, abrigo: estado.abrigo, protecao });
   }
   estado.alertas = estado.alertas.filter(a => a.chega > sol);
   estado.radiacao = limitar(estado.radiacao + dose);
   if (estado.abrigo) estado.stats.solsNoAbrigo += 1;
 
-  // 3) explosões vistas hoje → aviso de tempestade a caminho
-  for (const f of flares) {
-    const classe = f.classe?.[0];
-    if (!(classe in REGRAS.atrasoSols)) { eventos.push({ tipo: 'menor', flare: f }); continue; }
-    const chega = sol + REGRAS.atrasoSols[classe];  // atinge no fim desse sol
-    estado.alertas.push({ chega, dose: doseDaTempestade(f.classe), flare: f });
-    eventos.push({ tipo: 'aviso', flare: f, chega });
+  // 3) eventos detectados hoje → aviso de tempestade a caminho (chega no fim do sol previsto pela NASA)
+  for (const e of avisos) {
+    const chega = Math.max(e.solChega, sol + 1);
+    estado.alertas.push({ chega, dose: doseDoEvento(e), evento: e });
+    eventos.push({ tipo: 'aviso', evento: e, chega });
   }
 
   estado.sol += 1;

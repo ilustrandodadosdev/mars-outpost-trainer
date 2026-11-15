@@ -10,7 +10,7 @@
 - Local: **Marte**.
 - Momento de tensão: **tempestade solar** (14/11/2026). Escolhido pelo Rogenrique entre opções que o Claude levantou: tempestade solar, falha de energia, colheita.
 - Mecânica: **aviso de tempestade → poucos sols para ir ao abrigo**. Foi um exemplo dado pelo Claude que o Rogenrique aceitou ("então vamos"). O abrigo protege, mas a estufa fica sem cuidado: troca comida por segurança.
-  - Simplificação científica: a luz da explosão chega na hora; as partículas chegam depois (no jogo: classe X = 1 sol, classe M = 2 sols).
+  - Simplificação científica: a luz da explosão chega na hora; a nuvem (CME) chega dias depois, no dia previsto pela NASA. As doses do jogo são de equilíbrio, não medidas.
 
 ## Decidido em 14/11/2026 (Rogenrique: "pode seguir conforme sua orientação")
 O Claude apresentou opções; o Rogenrique aceitou o pacote abaixo, mirando a premiação global.
@@ -25,5 +25,5 @@ O Claude apresentou opções; o Rogenrique aceitou o pacote abaixo, mirando a pr
 - Terreno 3D gerado (provisório) — trocar por recorte real do **Mars Trek**.
 - 4 barras: Power, Food, Oxygen, Radiation.
 - Construir clicando no chão; "Next sol" avança um dia.
-- **Cada sol = um dia real do registro de explosões solares da NASA (DONKI).**
+- **Cada sol = um dia real, de 21/04 a 20/05/2024.** As tempestades são as CMEs que o modelo WSA-Enlil da NASA (DONKI) previu chegarem a Marte nesse período (14 eventos); o aviso vem no dia em que a CME saiu do Sol. O final é a tempestade de 20/05/2024 medida pelo Curiosity (8,1 mGy). Decidido em 14/11/2026: o endpoint de explosões (FLR) do DONKI estava fora do ar, e as previsões para Marte servem melhor ao jogo.
 - Todos os números estão em `src/regras.js`, marcados como provisórios.

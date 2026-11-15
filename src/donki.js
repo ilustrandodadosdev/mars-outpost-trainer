@@ -1,56 +1,32 @@
-// Explosões solares do NASA DONKI (Space Weather Database Of Notifications, Knowledge, Information).
-// Cada sol do jogo corresponde a um dia real do registro: a explosão que o jogador vê aconteceu de verdade.
-// Sem dado da NASA (chave estourada/offline), usa um calendário SIMULADO e avisa isso na tela.
-import { NASA_API_KEY, DIAS_DA_MISSAO } from './config.js';
+// Clima espacial REAL da missão: NASA DONKI (Space Weather Database Of Notifications, Knowledge, Information).
+// dados/marte-2024.json é gerado por scripts/montar_dados.py a partir das previsões do modelo WSA-Enlil
+// da NASA para CMEs que atingiriam Marte (21/04 a 20/05/2024) + o evento de 20/05/2024 medido pelo Curiosity.
+// 1 sol do jogo = 1 dia real. Sem o arquivo, usa um calendário SIMULADO e avisa isso na tela.
 
 const dia = d => d.toISOString().slice(0, 10);
 
-function normalizar(lista, fonte) {
-  return {
-    fonte, simulado: false,
-    flares: lista
-      .filter(x => x && x.classType)
-      .map(x => ({ id: x.flrID, data: (x.peakTime || x.beginTime || '').slice(0, 10), classe: x.classType, link: x.link })),
-  };
-}
-
 export async function carregarClimaEspacial() {
-  const fim = new Date();
-  const inicio = new Date(fim.getTime() - (DIAS_DA_MISSAO + 60) * 864e5);
-  const url = `https://api.nasa.gov/DONKI/FLR?startDate=${dia(inicio)}&endDate=${dia(fim)}&api_key=${NASA_API_KEY}`;
   try {
-    const r = await fetch(url);
-    const j = await r.json();
-    if (!Array.isArray(j)) throw new Error(j?.error?.code || `HTTP ${r.status}`);
-    if (j.length) return normalizar(j, 'NASA DONKI · live');
-    throw new Error('lista vazia');
+    const j = await fetch('dados/marte-2024.json').then(r => r.json());
+    if (Array.isArray(j.eventos) && j.eventos.length) return { ...j, simulado: false };
+    throw new Error('sem eventos');
   } catch (e) {
-    console.warn('[DONKI] ao vivo indisponível:', e.message);
-    try {
-      const j = await fetch('dados/flares-fallback.json').then(r => r.json());
-      if (Array.isArray(j) && j.length) return normalizar(j, 'NASA DONKI · saved copy');
-    } catch {}
-    return { fonte: 'SIMULATED — no NASA data loaded', simulado: true, flares: [] };
+    console.warn('[DONKI] dados reais indisponíveis:', e.message);
+    return { fonte: 'SIMULATED — no NASA data loaded', simulado: true, inicio: null, eventos: SIMULADO };
   }
 }
 
 // Calendário simulado (só quando não há dado real). Fica explícito na tela e no registro.
-const SIMULADO = { 3: 'C4.1', 6: 'M2.0', 11: 'C7.5', 13: 'X1.2', 18: 'M1.1', 21: 'M3.4', 26: 'X2.0' };
+const SIMULADO = [
+  [3, 7, 500, false], [10, 13, 900, true], [18, 20, 700, false], [24, 26, 1500, true], [27, 29, 1100, true],
+].map(([solAviso, solChega, velocidade, direto], i) =>
+  ({ id: `sim-${i}`, tipo: 'cme', solAviso, solChega, velocidade, direto, saiu: 'simulated', simulado: true, link: null }));
 
 export function montarCalendario(clima) {
-  if (clima.simulado || !clima.flares.length) {
-    return {
-      inicio: null,
-      dataDoSol: () => null,
-      porSol: sol => SIMULADO[sol] ? [{ id: `sim-${sol}`, data: 'simulated', classe: SIMULADO[sol], link: null, simulado: true }] : [],
-    };
-  }
-  const ultima = clima.flares.map(f => f.data).sort().at(-1);
-  const inicio = new Date(new Date(ultima).getTime() - (DIAS_DA_MISSAO - 1) * 864e5);
-  const dataDoSol = sol => dia(new Date(inicio.getTime() + (sol - 1) * 864e5));
+  const inicio = clima.inicio ? new Date(clima.inicio + 'T00:00:00Z') : null;
   return {
-    inicio: dia(inicio),
-    dataDoSol,
-    porSol: sol => clima.flares.filter(f => f.data === dataDoSol(sol)),
+    inicio: clima.inicio,
+    dataDoSol: inicio ? sol => dia(new Date(inicio.getTime() + (sol - 1) * 864e5)) : () => null,
+    porSol: sol => clima.eventos.filter(e => e.solAviso === sol),
   };
 }
