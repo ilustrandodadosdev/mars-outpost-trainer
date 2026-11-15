@@ -27,3 +27,10 @@ O Claude apresentou opções; o Rogenrique aceitou o pacote abaixo, mirando a pr
 - Construir clicando no chão; "Next sol" avança um dia.
 - **Cada sol = um dia real, de 21/04 a 20/05/2024.** As tempestades são as CMEs que o modelo WSA-Enlil da NASA (DONKI) previu chegarem a Marte nesse período (14 eventos); o aviso vem no dia em que a CME saiu do Sol. O final é a tempestade de 20/05/2024 medida pelo Curiosity (8,1 mGy). Decidido em 14/11/2026: o endpoint de explosões (FLR) do DONKI estava fora do ar, e as previsões para Marte servem melhor ao jogo.
 - Todos os números estão em `src/regras.js`, marcados como provisórios.
+
+## Fidelidade aos fatos (decidido em 14/11/2026, Rogenrique: "Sim, ajusta")
+- A base é imaginária; tudo em volta é real. Fica na **cratera Gale**, ao lado do **Curiosity** (confirmado em science.nasa.gov/mission/msl-curiosity).
+- Só entram missões que a NASA cita na tempestade de maio de 2024: **Curiosity** (RAD mediu o maior pico desde 2012), **MAVEN** (fotografou auroras) e **Mars Odyssey** (câmera de estrelas apagou por um tempo). No jogo: Curiosity em 3D com o detector RAD piscando quando a tempestade bate; MAVEN e Odyssey como duas luzes no céu.
+- Ficam de fora: Ingenuity (missão encerrada em 25/01/2024), InSight (encerrada antes), Perseverance (ativo, mas em Jezero e não citado no evento).
+- Os 8.100 µGy são a conta da NASA para "um astronauta ao lado do Curiosity", não uma leitura direta — o texto diz isso.
+- No evento final, as partículas chegaram em dezenas de minutos; o jogo dá 1 sol de aviso, e a tela final explica essa simplificação.

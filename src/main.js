@@ -26,7 +26,7 @@ controls.enablePan = false;
 controls.minDistance = 6;
 controls.maxDistance = 36;
 controls.minPolarAngle = 0.3;
-controls.maxPolarAngle = 1.25;
+controls.maxPolarAngle = 1.42;
 
 scene.add(new THREE.HemisphereLight(0xffe0c0, 0x6a3420, 2.2));
 const sol = new THREE.DirectionalLight(0xfff0dc, 3.2);
@@ -121,6 +121,43 @@ function criarModulo(tipo) {
 
 const grupoBase = new THREE.Group();
 scene.add(grupoBase);
+
+// ---------- Curiosity (rover real da NASA na cratera Gale) — low-poly, fora da área de construção ----------
+function criarCuriosity() {
+  const g = new THREE.Group();
+  const add = (geom, m, x, y, z) => { const o = new THREE.Mesh(geom, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+  const branco = mat(0xe8e4dc), cinza = mat(0x55524e), escuro = mat(0x2a2826), dourado = mat(0xc9a24a, { metalness: 0.5, roughness: 0.4 });
+  add(new THREE.BoxGeometry(1.5, 0.35, 0.95), branco, 0, 0.62, 0);            // corpo
+  add(new THREE.BoxGeometry(1.3, 0.04, 0.85), dourado, 0, 0.81, 0);            // deck
+  for (const x of [-0.6, 0, 0.6]) for (const z of [-0.58, 0.58]) {           // 6 rodas
+    add(new THREE.CylinderGeometry(0.2, 0.2, 0.16, 10).rotateX(Math.PI / 2), escuro, x, 0.2, z);
+  }
+  for (const z of [-0.5, 0.5]) add(new THREE.BoxGeometry(1.35, 0.06, 0.06), cinza, 0, 0.4, z); // suspensão
+  add(new THREE.CylinderGeometry(0.04, 0.05, 0.85, 6), branco, 0.5, 1.25, -0.25); // mastro
+  add(new THREE.BoxGeometry(0.3, 0.16, 0.2), branco, 0.52, 1.72, -0.25);        // cabeça (câmeras)
+  add(new THREE.BoxGeometry(0.06, 0.06, 0.04), escuro, 0.68, 1.72, -0.2);
+  const rtg = add(new THREE.CylinderGeometry(0.16, 0.18, 0.5, 8), cinza, -0.88, 0.85, 0); // gerador (RTG)
+  rtg.rotation.z = 0.9;
+  const braco = add(new THREE.BoxGeometry(0.7, 0.06, 0.06), branco, 0.95, 0.65, 0.3);
+  braco.rotation.z = -0.35;
+  const rad = add(new THREE.BoxGeometry(0.14, 0.1, 0.14), mat(0x444444, { emissive: 0xff3020, emissiveIntensity: 0 }), -0.2, 0.88, 0.2); // detector RAD
+  g.userData.rad = rad;
+  return g;
+}
+const curiosity = criarCuriosity();
+curiosity.position.set(2.5, altura(2.5, -8.2), -8.2);
+curiosity.rotation.y = -0.5;
+curiosity.scale.setScalar(0.9);
+scene.add(curiosity);
+
+// ---------- MAVEN e Mars Odyssey: dois pontos de luz cruzando o céu ----------
+const orbitadores = [0, 1].map(i => {
+  const o = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }));
+  // giram em volta da base, um pouco acima do horizonte (aparecem quando o jogador inclina a câmera)
+  o.userData = { fase: i * 0.5, periodo: i ? 70 : 50, altura: i ? 11 : 14, sobe: i ? -2 : 2 };
+  scene.add(o);
+  return o;
+});
 
 // ---------- Estado e interface ----------
 let estado = estadoInicial();
@@ -236,10 +273,11 @@ renderer.domElement.addEventListener('pointermove', ev => {
   celula = c;
   if (mudou) atualizarFantasma();
   const m = c && estado.modulos.find(m => m.x === c.x && m.z === c.z);
-  if (m && !selecionado) {
+  const noRover = !selecionado && ray.intersectObject(curiosity, true).length > 0;
+  if ((m && !selecionado) || noRover) {
     elDica.hidden = false;
     elDica.style.left = ev.clientX + 'px'; elDica.style.top = ev.clientY + 'px';
-    elDica.textContent = `${t(m.tipo)} · ${t(m.tipo + '_r')}`;
+    elDica.textContent = noRover ? t('dicaCuriosity') : `${t(m.tipo)} · ${t(m.tipo + '_r')}`;
   } else elDica.hidden = true;
 });
 renderer.domElement.addEventListener('pointerdown', ev => { inicioClique = { x: ev.clientX, y: ev.clientY }; });
@@ -279,6 +317,7 @@ document.getElementById('proximo').addEventListener('click', () => {
       registrar(t('regTempestade', { sol: solAtual, dose: ev.dose.toFixed(1), p: Math.round(ev.protecao * 100), abrigo: ev.abrigo ? t('regEmAbrigo') : '' }), true);
       flash.color.set(0xff5030);
       flash.intensity = 3;
+      curiosity.userData.rad.material.emissiveIntensity = 4;
     }
   }
   if (!eventos.length) registrar(t('regCalmo', { sol: solAtual }));
@@ -306,7 +345,7 @@ function mostrarFim() {
     t('resumoAbrigo', { n: s.solsNoAbrigo }),
   ].filter(Boolean).map(x => `<li>${x}</li>`).join('');
   document.getElementById('aprendeu-titulo').textContent = t('aprendeuTitulo');
-  document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3'].map(k => `<li>${t(k)}</li>`).join('');
+  document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3', 'fato4'].map(k => `<li>${t(k)}</li>`).join('');
   document.getElementById('fontes').innerHTML = FONTES.map(f => `<a href="${f.url}" target="_blank" rel="noopener">${f.rotulo}</a>`).join(' · ');
   document.getElementById('fim').hidden = false;
 }
@@ -323,6 +362,7 @@ document.getElementById('reiniciar').addEventListener('click', () => {
   elRegistro.innerHTML = '';
   document.getElementById('fim').hidden = true;
   registrar(t('novaMissao'));
+  registrar(t('cenario'));
   atualizarHUD();
 });
 
@@ -342,9 +382,18 @@ renderer.setAnimationLoop(() => {
     }
   }
   flash.intensity *= 0.93;
+  const radM = curiosity.userData.rad.material;
+  radM.emissiveIntensity = Math.max(radM.emissiveIntensity * 0.97, 0.4 + 0.3 * Math.sin(performance.now() / 300));
+  const tempo = performance.now() / 1000;
+  for (const o of orbitadores) {
+    const { fase, periodo, altura: h, sobe } = o.userData;
+    const a = (tempo / periodo + fase) * Math.PI * 2;              // volta completa em volta da base
+    o.position.set(Math.cos(a) * 55, h + Math.sin(a * 2) * sobe, Math.sin(a) * 55);
+  }
   renderer.render(scene, camera);
 });
 
+registrar(t('cenario'));
 registrar(t('inicio'));
 atualizarHUD();
 carregarClimaEspacial().then(clima => {

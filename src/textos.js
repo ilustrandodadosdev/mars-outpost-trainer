@@ -52,10 +52,13 @@ const T = {
     resumoTempestades: 'Solar storms that hit you: <b>{n}</b>',
     resumoEvitada: 'Storm radiation you blocked: <b>{p}%</b>',
     resumoAbrigo: 'Sols in shelter: <b>{n}</b>',
-    aprendeuTitulo: 'What real astronauts learned',
-    fato1: 'On a normal day, the surface of Mars gives about <b>0.21 mGy</b> of radiation — far more than on Earth. Measured by NASA\'s Curiosity rover.',
-    fato2: 'On <b>20 May 2024</b> a solar storm hit Mars with <b>8.1 mGy</b> in one burst — like 30 chest X-rays. Cliffs or lava tubes would have protected astronauts.',
-    fato3: 'Light from a solar flare arrives in minutes, but the dangerous particles can take hours or days. That gap is the warning time — <b>plan before the danger arrives</b>.',
+    aprendeuTitulo: 'What the real data shows',
+    cenario: '🪐 Your outpost is imaginary, but everything around it is real: it stands in <b>Gale Crater</b>, next to NASA’s <b>Curiosity</b> rover, and the solar storms are the ones NASA predicted would reach Mars from 21 April to 20 May 2024. Drag up to see the sky: the two moving lights are NASA’s orbiters <b>MAVEN</b> and <b>Mars Odyssey</b>.',
+    dicaCuriosity: 'Curiosity (NASA) · real rover exploring Gale Crater since 2012 · its RAD detector measures radiation on the surface',
+    fato1: 'On a normal day, the surface of Mars gives about <b>0.21 mGy</b> of radiation — far more than on Earth. Measured by the RAD detector on NASA’s Curiosity rover.',
+    fato2: 'On <b>20 May 2024</b> a huge solar storm hit Mars. NASA calculated that an astronaut standing next to Curiosity would have received <b>8,100 micrograys</b> — like 30 chest X-rays. It was the biggest surge Curiosity’s RAD had measured since it landed in 2012.',
+    fato3: 'Light from a flare arrives in minutes. On 20 May the particles came right behind it, in <b>tens of minutes</b> — in the game we gave you one sol of warning so you could react. Clouds of plasma (CMEs) take days, and NASA’s models predict when they arrive: <b>plan before the danger arrives</b>.',
+    fato4: 'Other NASA spacecraft watched the same storm: <b>MAVEN</b> photographed auroras glowing over Mars, and <b>Mars Odyssey</b>’s star camera was briefly knocked out by the particles. No astronauts were there — yet.',
   },
   pt: {
     carregando: 'Carregando o clima espacial da NASA…',
@@ -104,10 +107,13 @@ const T = {
     resumoTempestades: 'Tempestades solares que atingiram a base: <b>{n}</b>',
     resumoEvitada: 'Radiação de tempestade que você bloqueou: <b>{p}%</b>',
     resumoAbrigo: 'Sols no abrigo: <b>{n}</b>',
-    aprendeuTitulo: 'O que os astronautas de verdade aprenderam',
-    fato1: 'Num dia comum, a superfície de Marte dá cerca de <b>0,21 mGy</b> de radiação — muito mais que na Terra. Medido pelo rover Curiosity, da NASA.',
-    fato2: 'Em <b>20 de maio de 2024</b> uma tempestade solar atingiu Marte com <b>8,1 mGy</b> de uma vez — como 30 raios X de tórax. Paredões de rocha ou tubos de lava teriam protegido os astronautas.',
-    fato3: 'A luz de uma explosão solar chega em minutos, mas as partículas perigosas podem levar horas ou dias. Esse intervalo é o tempo de aviso — <b>planeje antes do perigo chegar</b>.',
+    aprendeuTitulo: 'O que os dados reais mostram',
+    cenario: '🪐 Sua base é imaginária, mas tudo em volta é real: ela fica na <b>cratera Gale</b>, ao lado do rover <b>Curiosity</b>, da NASA, e as tempestades solares são as que a NASA previu chegarem a Marte de 21 de abril a 20 de maio de 2024. Arraste para cima para ver o céu: as duas luzes que passam são os orbitadores <b>MAVEN</b> e <b>Mars Odyssey</b>, da NASA.',
+    dicaCuriosity: 'Curiosity (NASA) · rover real que explora a cratera Gale desde 2012 · o detector RAD dele mede a radiação na superfície',
+    fato1: 'Num dia comum, a superfície de Marte dá cerca de <b>0,21 mGy</b> de radiação — muito mais que na Terra. Medido pelo detector RAD do rover Curiosity, da NASA.',
+    fato2: 'Em <b>20 de maio de 2024</b> uma tempestade solar enorme atingiu Marte. A NASA calculou que um astronauta ao lado do Curiosity teria recebido <b>8.100 microgray</b> — como 30 raios X de tórax. Foi o maior pico que o RAD do Curiosity mediu desde o pouso, em 2012.',
+    fato3: 'A luz de uma explosão chega em minutos. Em 20 de maio as partículas vieram logo atrás, em <b>dezenas de minutos</b> — no jogo demos um sol de aviso para dar tempo de reagir. Nuvens de plasma (CMEs) levam dias, e os modelos da NASA preveem quando chegam: <b>planeje antes do perigo chegar</b>.',
+    fato4: 'Outras naves da NASA viram a mesma tempestade: o <b>MAVEN</b> fotografou auroras brilhando sobre Marte, e a câmera de estrelas da <b>Mars Odyssey</b> apagou por um tempo com as partículas. Nenhum astronauta estava lá — ainda.',
   },
 };
 
@@ -115,6 +121,7 @@ export const FONTES = [
   { rotulo: 'Hassler et al., Science (2014) — Curiosity RAD', url: 'https://doi.org/10.1126/science.1244797' },
   { rotulo: 'NASA (2024) — Mars lights up during epic solar storm', url: 'https://www.nasa.gov/missions/maven/nasa-watches-mars-light-up-during-epic-solar-storm/' },
   { rotulo: 'NASA DONKI — Space Weather Database', url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/' },
+  { rotulo: 'NASA — Curiosity rover mission', url: 'https://science.nasa.gov/mission/msl-curiosity/' },
 ];
 
 function inicial() {
