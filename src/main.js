@@ -2,8 +2,40 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual } from './regras.js';
 import { carregarClimaEspacial, montarCalendario } from './donki.js';
-import { t, trocarIdioma, idioma, FONTES } from './textos.js';
+import { t, trocarIdioma, idioma, fontes, definirMissao } from './textos.js';
+import { MISSOES, missaoDaURL } from './missoes.js';
 import { criarCeu, criarTexturasSolo, criarClima, CORES_CEU, POEIRA_ESTACAO } from './visual.js';
+
+// ---------- Escolha da missão (Curiosity em Gale ou Perseverance em Jezero) ----------
+// ?missao=... na URL pula a tela (dá para mandar o link direto de uma missão).
+function escolherMissao() {
+  const el = document.getElementById('escolha');
+  const textos = () => {
+    document.getElementById('escolha-idioma').textContent = t('idioma');
+    document.getElementById('escolha-titulo').textContent = t('escolhaTitulo');
+    document.getElementById('escolha-sub').textContent = t('escolhaSub');
+    document.getElementById('desc-curiosity').textContent = t('curiosityDesc');
+    document.getElementById('desc-perseverance').textContent = t('perseveranceDesc');
+    document.getElementById('tripulada').innerHTML = t('tripulada');
+  };
+  textos();
+  el.hidden = false;
+  document.getElementById('escolha-idioma').onclick = () => { trocarIdioma(); textos(); };
+  return new Promise(ok => {
+    el.querySelector('.cartoes').addEventListener('click', e => {
+      const b = e.target.closest('button[data-missao]');
+      if (!b) return;
+      const u = new URL(location.href);
+      u.searchParams.set('missao', b.dataset.missao);
+      history.replaceState(null, '', u);
+      el.hidden = true;
+      ok(b.dataset.missao);
+    });
+  });
+}
+const MISSAO_ID = missaoDaURL() ?? await escolherMissao();
+const MISSAO = MISSOES[MISSAO_ID];
+definirMissao(MISSAO_ID);
 
 // ---------- Cena ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -47,20 +79,21 @@ sol.shadow.normalBias = 0.02;
 Object.assign(sol.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 110 });
 scene.add(sol);
 
-// ---------- Terreno: relevo real da cratera Gale (USGS, MSL Gale Merged DEM 1 m) ----------
-// assets/relevo/gale.bin = 257x257 alturas Uint16 de um quadrado de 8 km centrado ~3,7 km ao sul
-// do pouso do Curiosity (Bradbury Landing). Sul = -z: a câmera inicial olha para o Monte Sharp (Aeolis Mons).
+// ---------- Terreno: relevo real do local da missão (USGS, DEMs de 1 m) ----------
+// assets/relevo/<local>.bin = 257x257 alturas Uint16 de um quadrado de 8 km.
+// gale: centrado ~3,7 km ao sul do pouso do Curiosity; sul = -z, a câmera olha para o Monte Sharp.
+// jezero: centrado ~1,7 km a oeste do pouso do Perseverance; oeste = -z, a câmera olha para o delta.
 // 1 unidade = 100 m na horizontal; relevo com exagero vertical declarado (EXAGERO) para ser legível.
 // A base fica numa praça nivelada no centro; fora dela o chão é o de Gale de verdade.
 const BASE_Y = 1.4;
 const CELULAR = matchMedia('(pointer: coarse)').matches;
 const LADO = 80;
-const EXAGERO = 2;
+const EXAGERO = MISSAO.exagero;   // exagero vertical declarado nas fontes (2× Gale, 4× Jezero)
 async function carregarRelevo() {
   try {
     const [meta, bin] = await Promise.all([
-      fetch('assets/relevo/gale.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-      fetch('assets/relevo/gale.bin').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }),
+      fetch(`assets/relevo/${MISSAO.relevo}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch(`assets/relevo/${MISSAO.relevo}.bin`).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }),
     ]);
     const u = new Uint16Array(bin), n = meta.n, esc = (meta.zMax - meta.zMin) / 65535;
     const metrosPorUnidade = meta.ladoMetros / LADO;
@@ -110,7 +143,7 @@ const terrenoGeo = relevo ? geo : geo.toNonIndexed();
 terrenoGeo.computeVertexNormals();
 const cores = [];
 // tons do regolito de Gale nas fotos do Curiosity: castanho-caramelo, rocha mais escura nas encostas
-const c1 = relevo ? new THREE.Color(0xa0643f) : new THREE.Color(0x9c4a26), c2 = relevo ? new THREE.Color(0xc89064) : new THREE.Color(0xc9773f);
+const c1 = new THREE.Color(relevo ? MISSAO.cores[0] : 0x9c4a26), c2 = new THREE.Color(relevo ? MISSAO.cores[1] : 0xc9773f);
 const c3 = new THREE.Color(0x6a4330), cTmp = new THREE.Color();
 const tp = terrenoGeo.attributes.position, tn = terrenoGeo.attributes.normal;
 if (relevo) {
@@ -210,6 +243,8 @@ const curiosity = criarCuriosity();
 curiosity.position.set(2.5, altura(2.5, -8.2), -8.2);
 curiosity.rotation.y = -0.5;
 curiosity.scale.setScalar(0.9);
+// o detector RAD (que brilha nas tempestades) é do Curiosity; o Perseverance não tem
+curiosity.userData.rad.visible = MISSAO_ID === 'curiosity';
 scene.add(curiosity);
 
 // ---------- MAVEN e Mars Odyssey: dois pontos de luz cruzando o céu ----------
@@ -241,7 +276,32 @@ function montarTextosFixos() {
   elIdioma.title = t('idiomaTitulo');
   document.getElementById('proximo').textContent = t('proximo');
   document.getElementById('reiniciar').textContent = t('reiniciar');
+  document.getElementById('trocar').textContent = t('trocarMissao');
+  document.getElementById('local').textContent = '· ' + t('local');
+  const elSom = document.getElementById('som');
+  elSom.title = t('somTitulo');
+  elSom.textContent = somLigado ? t('som') : t('somDesligado');
 }
+// ---------- Som: vento real do Perseverance (o Curiosity não tem microfone) ----------
+let somLigado = true;
+let audio = null;
+if (MISSAO.som) {
+  audio = new Audio();
+  const [ogg, wav] = MISSAO.som;
+  audio.src = audio.canPlayType('audio/ogg; codecs="vorbis"') ? ogg : wav;
+  audio.loop = true;
+  audio.volume = 0.55;
+  document.getElementById('som').hidden = false;
+}
+function tocarSom() { if (audio && somLigado && audio.paused) audio.play().catch(() => {}); }
+// navegadores só deixam tocar depois de um toque/clique: tenta agora (veio da tela de escolha) e no 1º toque
+tocarSom();
+addEventListener('pointerdown', tocarSom, { once: true });
+document.getElementById('som').addEventListener('click', () => {
+  somLigado = !somLigado;
+  if (somLigado) tocarSom(); else audio?.pause();
+  montarTextosFixos();
+});
 montarTextosFixos();
 const elRegistro = document.getElementById('registro');
 const elDica = document.getElementById('dica');
@@ -424,8 +484,8 @@ function mostrarFim() {
     t('resumoAbrigo', { n: s.solsNoAbrigo }),
   ].filter(Boolean).map(x => `<li>${x}</li>`).join('');
   document.getElementById('aprendeu-titulo').textContent = t('aprendeuTitulo');
-  document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3', 'fato4'].map(k => `<li>${t(k)}</li>`).join('');
-  document.getElementById('fontes').innerHTML = FONTES.map(f => `<a href="${f.url}" target="_blank" rel="noopener">${f.rotulo}</a>`).join(' · ');
+  document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3', 'fato4', 'fato5'].map(k => `<li>${t(k)}</li>`).join('');
+  document.getElementById('fontes').innerHTML = fontes().map(f => `<a href="${f.url}" target="_blank" rel="noopener">${f.rotulo}</a>`).join(' · ');
   document.getElementById('fim').hidden = false;
   document.body.classList.add('em-debrief');
 }
@@ -436,6 +496,11 @@ document.getElementById('idioma').addEventListener('click', () => {
   redesenharRegistro();
   atualizarHUD();
   if (estado.fim) mostrarFim();
+});
+document.getElementById('trocar').addEventListener('click', () => {
+  const u = new URL(location.href);
+  u.searchParams.delete('missao');
+  location.href = u;
 });
 document.getElementById('reiniciar').addEventListener('click', () => {
   estado = estadoInicial();
@@ -497,5 +562,5 @@ carregarClimaEspacial().then(clima => {
 
 // Só para gravar a demo (?demo na URL): expõe câmera e objetos ao script de captura.
 if (new URLSearchParams(location.search).has('demo')) {
-  window.__demo = { THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y, clima, ceu };
+  window.__demo = { missao: MISSAO_ID, audio, THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y, clima, ceu };
 }

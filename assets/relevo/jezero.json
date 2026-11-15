@@ -1,0 +1,11 @@
+{
+ "fonte": "USGS Astrogeology — Mars 2020 TRN HiRISE DTM Mosaic 1 m (CC0)",
+ "url": "https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_hirise_dtm_mosaic",
+ "n": 257,
+ "ladoMetros": 8000,
+ "zMin": -2635.91,
+ "zMax": -2387.77,
+ "centroLat": 18.4534,
+ "centroLon": 77.422,
+ "frente": "oeste"
+}

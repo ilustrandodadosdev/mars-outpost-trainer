@@ -1,8 +1,9 @@
 """Lê linhas escolhidas do DEM (1 linha = 1 strip LZW) por HTTP Range, sem baixar o arquivo inteiro.
 uso: python dem_linhas.py ini fim passo saida.npy [col_ini col_fim passo_col]"""
-import sys, fsspec, tifffile, numpy as np, requests, imagecodecs
+import os, sys, fsspec, tifffile, numpy as np, requests, imagecodecs
 from concurrent.futures import ThreadPoolExecutor
-URL = 'https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/Mars/MSL/MSL_Gale_DEM_Mosaic_1m_v3.tif'
+# DEM_URL troca o mosaico (padrão: Gale). Jezero: o mosaico HiRISE do pouso do Mars 2020.
+URL = os.environ.get('DEM_URL', 'https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/Mars/MSL/MSL_Gale_DEM_Mosaic_1m_v3.tif')
 ini, fim, passo, saida = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), sys.argv[4]
 c0, c1, pc = (int(a) for a in sys.argv[5:8]) if len(sys.argv) > 5 else (0, None, 1)
 with fsspec.open(URL, 'rb', block_size=2**16) as f:

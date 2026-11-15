@@ -108,3 +108,15 @@ O que não muda: dados reais do DONKI, regra de nunca apresentar dado simulado c
 - **Céu:** a emenda que aparecia no horizonte foi corrigida.
 - **Fontes novas** na tela final: PIA19400, Lemmon et al. 2024, PIA24039.
 - **Testado:** PC e celular sem erro; partida inteira em EN e PT. Só os títulos das fontes ficam em inglês.
+
+## Escolha da missão: Curiosity (Gale) ou Perseverance (Jezero)
+
+- Tela inicial com dois cartões; a escolha vai para a URL (`?missao=curiosity|perseverance`), então dá para mandar o link direto de uma missão. "Trocar de missão" no debrief volta para a tela.
+- **Missão tripulada:** nenhum ser humano foi a Marte ainda. A tela diz isso e que a tripulação do jogo é **simulada** (o jogador treina para ser a primeira).
+- **Perseverance / Jezero:**
+  - Relevo real: USGS Mars 2020 TRN HiRISE DTM mosaic 1 m (CC0), quadrado de 8 km a ~1,7 km a oeste do pouso; o delta fica à frente da câmera. Jezero tem só ~250 m de desnível no quadrado, então o exagero vertical é **4×** (Gale continua 2×), declarado nas fontes.
+  - Som real: vento gravado pelo microfone do SuperCam no sol 4 (22/02/2021), NASA/JPL-Caltech/LANL/CNES (página "Sounds from Beyond"). Trecho de 26 s, volume normalizado, em laço; OGG de 29 KB com WAV reserva para o Safari. Botão 🔊/🔇 no topo.
+  - O detector RAD (que brilha nas tempestades) fica escondido: ele é do Curiosity.
+  - Fato novo no debrief: MOXIE fez 122 g de oxigênio (NASA, 2023).
+- **Curiosity / Gale:** sem som, e o debrief explica que o Curiosity não tem microfone.
+- O clima espacial (DONKI, abr–mai 2024) é o mesmo nas duas: tempestade solar atinge Marte inteiro. A dose de referência continua sendo a do RAD do Curiosity.

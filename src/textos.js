@@ -61,6 +61,19 @@ const T = {
     fato2: 'On <b>20 May 2024</b> a huge solar storm hit Mars. NASA calculated that an astronaut standing next to Curiosity would have received <b>8,100 micrograys</b> — like 30 chest X-rays. It was the biggest surge Curiosity’s RAD had measured since it landed in 2012.',
     fato3: 'Light from a flare arrives in minutes. On 20 May the particles came right behind it, in <b>tens of minutes</b> — in the game we gave you one sol of warning so you could react. Clouds of plasma (CMEs) take days, and NASA’s models predict when they arrive: <b>plan before the danger arrives</b>.',
     fato4: 'Other NASA spacecraft watched the same storm: <b>MAVEN</b> photographed auroras glowing over Mars, and <b>Mars Odyssey</b>’s star camera was briefly knocked out by the particles. No astronauts were there — yet.',
+    fato5: 'Curiosity has <b>no microphone</b>, so this mission is silent. Its neighbour <b>Perseverance</b> carries two — try its mission to hear the real wind of Mars.',
+    fato5_perseverance: 'The wind you heard is real: Perseverance’s <b>SuperCam</b> microphone recorded it in Jezero on 22 Feb 2021. Its <b>MOXIE</b> experiment made <b>122 g of oxygen</b> from the Martian air — proof that a future outpost could make its own O₂.',
+    // escolha da missão
+    escolhaTitulo: 'Choose your mission',
+    escolhaSub: 'Your outpost is built next to the rover you pick. The terrain, the rover and the solar storms are real NASA data.',
+    local: 'Gale Crater', local_perseverance: 'Jezero Crater',
+    curiosityDesc: 'Gale Crater · since 2012. Real 1 m terrain with Mount Sharp on the horizon. Its RAD detector measures radiation on the surface. No microphone: a silent mission.',
+    perseveranceDesc: 'Jezero Crater · since 2021. Real 1 m terrain of an ancient lake with a river delta. Listen to the real Martian wind from its microphone. MOXIE made oxygen from the air.',
+    tripulada: '👩‍🚀 Crewed mission? No human has been to Mars yet — you are training to be the first crew. The crew in this game is <b>simulated</b>.',
+    trocarMissao: 'Change mission',
+    som: '🔊', somDesligado: '🔇', somTitulo: 'Real wind recorded by Perseverance (turn sound on/off)',
+    cenario_perseverance: '🪐 Your outpost is imaginary, but everything around it is real: it stands in <b>Jezero Crater</b>, an ancient lake bed, next to NASA’s <b>Perseverance</b> rover. The wind you hear was recorded by its microphone. The solar storms are the ones NASA predicted would reach Mars from 21 April to 20 May 2024. Drag up to see the sky: the two moving lights are NASA’s orbiters <b>MAVEN</b> and <b>Mars Odyssey</b>.',
+    dicaCuriosity_perseverance: 'Perseverance (NASA) · real rover exploring Jezero Crater since 2021 · it carries two microphones and MOXIE, which made oxygen on Mars',
   },
   pt: {
     carregando: 'Carregando o clima espacial da NASA…',
@@ -118,19 +131,44 @@ const T = {
     fato2: 'Em <b>20 de maio de 2024</b> uma tempestade solar enorme atingiu Marte. A NASA calculou que um astronauta ao lado do Curiosity teria recebido <b>8.100 microgray</b> — como 30 raios X de tórax. Foi o maior pico que o RAD do Curiosity mediu desde o pouso, em 2012.',
     fato3: 'A luz de uma explosão chega em minutos. Em 20 de maio as partículas vieram logo atrás, em <b>dezenas de minutos</b> — no jogo demos um sol de aviso para dar tempo de reagir. Nuvens de plasma (CMEs) levam dias, e os modelos da NASA preveem quando chegam: <b>planeje antes do perigo chegar</b>.',
     fato4: 'Outras naves da NASA viram a mesma tempestade: o <b>MAVEN</b> fotografou auroras brilhando sobre Marte, e a câmera de estrelas da <b>Mars Odyssey</b> apagou por um tempo com as partículas. Nenhum astronauta estava lá — ainda.',
+    fato5: 'O Curiosity <b>não tem microfone</b>, por isso esta missão é silenciosa. O vizinho dele, o <b>Perseverance</b>, tem dois — jogue a missão dele para ouvir o vento real de Marte.',
+    fato5_perseverance: 'O vento que você ouviu é real: o microfone do <b>SuperCam</b> do Perseverance gravou em Jezero em 22 de fevereiro de 2021. O experimento <b>MOXIE</b> dele fez <b>122 g de oxigênio</b> com o ar de Marte — prova de que uma base no futuro pode produzir o próprio O₂.',
+    escolhaTitulo: 'Escolha sua missão',
+    escolhaSub: 'Sua base é construída ao lado do rover que você escolher. O relevo, o rover e as tempestades solares são dados reais da NASA.',
+    local: 'Cratera Gale', local_perseverance: 'Cratera Jezero',
+    curiosityDesc: 'Cratera Gale · desde 2012. Relevo real de 1 m com o Monte Sharp no horizonte. O detector RAD dele mede a radiação na superfície. Sem microfone: missão silenciosa.',
+    perseveranceDesc: 'Cratera Jezero · desde 2021. Relevo real de 1 m de um antigo lago com delta de rio. Ouça o vento real de Marte gravado pelo microfone dele. O MOXIE fez oxigênio com o ar.',
+    tripulada: '👩‍🚀 Missão tripulada? Nenhum ser humano foi a Marte ainda — você está treinando para ser a primeira tripulação. A tripulação deste jogo é <b>simulada</b>.',
+    trocarMissao: 'Trocar de missão',
+    somTitulo: 'Vento real gravado pelo Perseverance (ligar/desligar som)',
+    cenario_perseverance: '🪐 Sua base é imaginária, mas tudo em volta é real: ela fica na <b>cratera Jezero</b>, o fundo de um antigo lago, ao lado do rover <b>Perseverance</b>, da NASA. O vento que você ouve foi gravado pelo microfone dele. As tempestades solares são as que a NASA previu chegarem a Marte de 21 de abril a 20 de maio de 2024. Arraste para cima para ver o céu: as duas luzes que passam são os orbitadores <b>MAVEN</b> e <b>Mars Odyssey</b>, da NASA.',
+    dicaCuriosity_perseverance: 'Perseverance (NASA) · rover real que explora a cratera Jezero desde 2021 · leva dois microfones e o MOXIE, que fez oxigênio em Marte',
   },
 };
 
-export const FONTES = [
+const FONTES_COMUNS = [
   { rotulo: 'Hassler et al., Science (2014) — Curiosity RAD', url: 'https://doi.org/10.1126/science.1244797' },
   { rotulo: 'NASA (2024) — Mars lights up during epic solar storm', url: 'https://www.nasa.gov/missions/maven/nasa-watches-mars-light-up-during-epic-solar-storm/' },
   { rotulo: 'NASA DONKI — Space Weather Database', url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/' },
-  { rotulo: 'NASA — Curiosity rover mission', url: 'https://science.nasa.gov/mission/msl-curiosity/' },
-  { rotulo: 'USGS Astrogeology — MSL Gale Merged DEM 1 m (terrain, 8 km, 2× vertical)', url: 'https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m' },
+];
+const FONTES_MISSAO = {
+  curiosity: [
+    { rotulo: 'NASA — Curiosity rover mission', url: 'https://science.nasa.gov/mission/msl-curiosity/' },
+    { rotulo: 'USGS Astrogeology — MSL Gale Merged DEM 1 m (terrain, 8 km, 2× vertical)', url: 'https://astrogeology.usgs.gov/search/map/mars_msl_gale_merged_dem_1m' },
+  ],
+  perseverance: [
+    { rotulo: 'NASA — Perseverance rover mission', url: 'https://science.nasa.gov/mission/mars-2020-perseverance/' },
+    { rotulo: 'USGS Astrogeology — Mars 2020 TRN HiRISE DTM mosaic 1 m, CC0 (terrain, 8 km, 4× vertical)', url: 'https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_hirise_dtm_mosaic' },
+    { rotulo: 'NASA/JPL-Caltech/LANL/CNES — SuperCam wind recording, sol 4 (26 s excerpt, volume normalized, looped)', url: 'https://www.nasa.gov/sounds-from-beyond/' },
+    { rotulo: 'NASA (2023) — MOXIE completes its oxygen-making mission', url: 'https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/' },
+  ],
+};
+const FONTES_VISUAIS = [
   { rotulo: 'NASA/JPL PIA19400 — Sunset in Gale Crater (blue near the Sun)', url: 'https://photojournal.jpl.nasa.gov/catalog/PIA19400' },
   { rotulo: 'Lemmon et al. (2024) — MSL optical depth record (dusty southern summer; haze level illustrative)', url: 'https://arxiv.org/abs/2309.07378' },
   { rotulo: 'NASA/JPL PIA24039 — Curiosity spots a dust devil in Gale', url: 'https://photojournal.jpl.nasa.gov/catalog/PIA24039' },
 ];
+export const fontes = () => [...FONTES_COMUNS, ...FONTES_MISSAO[missao], ...FONTES_VISUAIS];
 
 function inicial() {
   try { const s = localStorage.getItem('idioma'); if (s in T) return s; } catch {}
@@ -143,7 +181,11 @@ export function trocarIdioma() {
   try { localStorage.setItem('idioma', idioma); } catch {}
   document.documentElement.lang = idioma === 'pt' ? 'pt-BR' : 'en';
 }
+// Missão escolhida: uma chave com o sufixo _<missão> (ex.: cenario_perseverance) troca a chave base.
+let missao = 'curiosity';
+export function definirMissao(m) { missao = m; }
 export function t(chave, vars = {}) {
-  const s = T[idioma][chave] ?? T.en[chave] ?? chave;
+  const k2 = chave + '_' + missao;
+  const s = T[idioma][k2] ?? T.en[k2] ?? T[idioma][chave] ?? T.en[chave] ?? chave;
   return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 }

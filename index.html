@@ -17,7 +17,7 @@
 
 <header class="hud topo">
   <div>
-    <h1>Mars Outpost Trainer <button id="idioma" class="idioma"></button></h1>
+    <h1>Mars Outpost Trainer <small id="local"></small> <button id="idioma" class="idioma"></button> <button id="som" class="idioma" hidden></button></h1>
     <div id="sol" class="sol">Sol 1</div>
     <div id="clima" class="clima"></div>
   </div>
@@ -47,6 +47,20 @@
     <ul id="fatos"></ul>
     <p id="fontes" class="fontes"></p>
     <button id="reiniciar"></button>
+    <button id="trocar" class="secundario"></button>
+  </div>
+</div>
+
+<div id="escolha" class="escolha" hidden>
+  <div class="caixa">
+    <button id="escolha-idioma" class="idioma"></button>
+    <h2 id="escolha-titulo"></h2>
+    <p id="escolha-sub"></p>
+    <div class="cartoes">
+      <button data-missao="curiosity"><b>Curiosity</b><span id="desc-curiosity"></span></button>
+      <button data-missao="perseverance"><b>Perseverance</b><span id="desc-perseverance"></span></button>
+    </div>
+    <p id="tripulada" class="tripulada"></p>
   </div>
 </div>
 
