@@ -21,7 +21,7 @@ Then open http://localhost:8765.
 ## Demo
 - 30-second video and 7 slides: https://mars-outpost-trainer.vercel.app/demo/
 - Submission texts: `SUBMISSAO.md`.
-- The demo was captured from the real game with Playwright (`?demo` in the URL exposes the camera to the capture script; it changes nothing in play).
+- The demo was captured from the real game with Playwright (`?demo` in the URL exposes the camera to the capture script; it changes nothing in play). The music is original, synthesized by `scripts/demo/musica.py` (no third-party audio).
 
 ## NASA data
 - **DONKI — Space Weather Database Of Notifications, Knowledge, Information** (https://api.nasa.gov): the **WSA-Enlil** simulations list each coronal mass ejection (CME) predicted to reach Mars, with arrival time, speed and whether it is a direct hit or a glancing blow. The game warns the player on the day the CME left the Sun and hits the outpost on the predicted arrival day.

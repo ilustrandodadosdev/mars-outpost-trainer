@@ -75,7 +75,7 @@ When a coronal mass ejection leaves the Sun, a warning appears with the predicte
 - Libraries: three.js 0.160 for low-poly 3D rendering in the browser.
 - Data: the NASA DONKI API via api.nasa.gov.
 - Hosting: a static site on Vercel. There is no build step and no server code.
-- Demo production: the gameplay was captured with Playwright (headless Chromium), and the frames were edited with Python and Pillow.
+- Demo production: the gameplay was captured with Playwright (headless Chromium), the frames were edited with Python and Pillow, and the original music was synthesized with Python and NumPy.
 
 ## Use of Artificial Intelligence (AI) / Super Intelligence
 
@@ -88,7 +88,7 @@ We used Claude (Anthropic) as a coding assistant. It helped write:
 
 The game idea, rules, educational goals and design decisions are the participant's own. They are recorded with dates in `IDEIA.md` in the repository, and every AI suggestion was reviewed and accepted or changed by the participant.
 
-All images in the video and slides are real screenshots of the game, which is rendered by code written with AI help; no AI image or video generator was used. Every frame of the video and every slide carries the visible note "code written with AI assistance (Claude)". The README also states that AI was used.
+All images in the video and slides are real screenshots of the game, which is rendered by code written with AI help; no AI image, video or music generator was used. The video's background music is original: it was synthesized note by note by a Python script written with AI assistance (`scripts/demo/musica.py`), with no samples or third-party recordings. Every frame of the video carries the visible note "game code and music written with AI assistance (Claude)", and every slide carries "code written with AI assistance (Claude)". The README also states that AI was used.
 
 No NASA logos or branding appear in the game or the demo.
 
@@ -110,3 +110,4 @@ None used directly. All mission data comes from NASA sources.
 - Vercel for free static hosting.
 - Claude (Anthropic) as an AI coding assistant (see the AI section above).
 - Fonts in the video: Segoe UI (system font).
+- Music: original track synthesized with Python and NumPy (`scripts/demo/musica.py`); no third-party audio. Video encoded with FFmpeg (via imageio-ffmpeg).
