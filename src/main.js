@@ -178,6 +178,24 @@ const terreno = new THREE.Mesh(terrenoGeo, new THREE.MeshStandardMaterial({
 terreno.receiveShadow = true;
 scene.add(terreno);
 
+// marcador do pouso do Perseverance (aproximado): o pouso e a Ha'ahóni ficam a 0,1 km um do outro
+// (M20_waypoints.json, NASA). A base está no centro do quadrado e o pouso ~1,6 km a leste (z+).
+// A diferença norte-sul (~0,5 km) é ignorada: o marcador é aproximado, não a posição exata.
+if (relevo && MISSAO_ID === 'perseverance') {
+  const pz = 16, py = altura(0, pz) + 1.2;
+  const pino = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd23f }));
+  pino.position.set(0, py, pz);
+  scene.add(pino);
+  const tela = document.createElement('canvas');
+  tela.width = 512; tela.height = 128;
+  const g = tela.getContext('2d');
+  g.font = 'bold 56px sans-serif'; g.fillStyle = '#ffd23f'; g.fillText(t('marcaPouso'), 10, 84);
+  const rotulo = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(tela), depthTest: false }));
+  rotulo.scale.set(8, 2, 1);
+  rotulo.position.set(0, py + 2.5, pz);
+  scene.add(rotulo);
+}
+
 // pedras low-poly fora da área da base
 const matPedra = new THREE.MeshStandardMaterial({ color: 0x6e3a22, flatShading: true, roughness: 1 });
 for (let i = 0; i < 70; i++) {
@@ -571,6 +589,14 @@ function mostrarFim() {
       + `<span class="real"><em>${t('compReal')}</em> ${t('metaReal_' + m.id)}</span></li>`;
   }).join('');
   document.getElementById('compara-nota').textContent = t('compNota');
+  // esquema do trajeto real: só na missão Perseverance, com as paradas confirmadas na página de amostras da NASA
+  const trajeto = MISSAO_ID === 'perseverance';
+  document.getElementById('trajeto').hidden = !trajeto;
+  if (trajeto) {
+    document.getElementById('trajeto-titulo').textContent = t('trajetoTitulo');
+    document.getElementById('trajeto-lista').innerHTML = ['trajetoP1', 'trajetoP2', 'trajetoP3'].map(k => `<li>${t(k)}</li>`).join('');
+    document.getElementById('trajeto-nota').textContent = t('trajetoNota');
+  }
   document.getElementById('aprendeu-titulo').textContent = t('aprendeuTitulo');
   document.getElementById('fatos').innerHTML = ['fato1', 'fato2', 'fato3', 'fato4', 'fato5'].map(k => `<li>${t(k)}</li>`).join('');
   document.getElementById('fontes').innerHTML = fontes().map(f => `<a href="${f.url}" target="_blank" rel="noopener">${f.rotulo}</a>`).join(' · ');
