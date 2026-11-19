@@ -205,3 +205,13 @@ body.em-debrief .metas { display: none; }   /* no debrief a comparação já mos
 .ponto-rover { position: absolute; top: -5px; left: 0; width: 16px; height: 16px; border-radius: 50%; background: #ffd23f; box-shadow: 0 0 8px rgba(255, 210, 63, .7); animation: andar-trajeto 6s ease-in-out infinite alternate; }
 @keyframes andar-trajeto { from { left: 0; } to { left: calc(100% - 16px); } }
 @media (prefers-reduced-motion: reduce) { .ponto-rover { animation: none; left: 50%; transform: translateX(-50%); } }
+
+/* Painel do rover real (clique no rover): informações, zoom e rota real */
+.rover-painel { position: fixed; z-index: 4; left: var(--margem); bottom: calc(var(--base-h, 90px) + 1rem); width: min(21rem, calc(100vw - 2 * var(--margem))); background: var(--fundo); border: 1px solid var(--borda); border-radius: 12px; padding: .8rem .95rem; backdrop-filter: blur(6px); }
+.rover-painel[hidden] { display: none; }
+.rover-painel h2 { margin: 0 0 .35rem; font-size: 1rem; color: var(--acento); }
+.rover-painel p { margin: .3rem 0; font-size: .85rem; line-height: 1.4; }
+.rover-sol { font-weight: 700; min-height: 1.2em; }
+.rover-acoes { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+.rover-acoes button { font: inherit; font-size: .8rem; font-weight: 700; color: var(--texto); background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; padding: .35rem .7rem; cursor: pointer; }
+.rover-acoes button:hover { border-color: var(--acento); }

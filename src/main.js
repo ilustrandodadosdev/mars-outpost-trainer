@@ -531,6 +531,8 @@ renderer.domElement.addEventListener('pointermove', ev => {
 renderer.domElement.addEventListener('pointerdown', ev => { inicioClique = { x: ev.clientX, y: ev.clientY }; });
 renderer.domElement.addEventListener('pointerup', ev => {
   if (!inicioClique || Math.hypot(ev.clientX - inicioClique.x, ev.clientY - inicioClique.y) > 5) return; // foi arrasto de câmera
+  // clique no rover (sem módulo selecionado): abre o painel dele
+  if (!selecionado && roverSobPonteiro(ev)) return abrirRover();
   const c = celulaSobPonteiro(ev);
   if (!selecionado || !c || ocupado().has(`${c.x},${c.z}`) || !podeConstruir(estado, selecionado)) return;
   construir(estado, selecionado, c.x, c.z);
@@ -546,6 +548,89 @@ renderer.domElement.addEventListener('pointerup', ev => {
   atualizarHUD();
   tutEvento('construir', tipoConstruido);
 });
+
+// ---------- Rover real: painel, zoom e rota real ----------
+// O rover não entra nas regras do jogo: o zoom e a rota são só visuais. Quando a rota acaba, o rover volta para a base.
+const elRover = document.getElementById('rover');
+const btnRota = document.getElementById('rover-rota');
+let voo = null;      // zoom suave da câmera até o rover
+let rotaReal = null; // pontos da rota real (perseverance_rota.json), carregados só na missão Perseverance
+let rota = null;     // reprodução da rota: {i, tempo, origem}
+if (MISSAO_ID === 'perseverance') {
+  fetch('assets/rota/perseverance_rota.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(j => { rotaReal = j.pontos; }).catch(e => console.warn('rota real não carregou', e));
+}
+function roverSobPonteiro(ev) {
+  ponteiro.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ponteiro, camera);
+  return ray.intersectObject(curiosity, true).length > 0;
+}
+function voarPara(alvo, posicao) {
+  voo = { alvo0: controls.target.clone(), pos0: camera.position.clone(), alvo1: alvo, pos1: posicao, tempo: 0 };
+}
+function abrirRover() {
+  elDica.hidden = true;
+  document.getElementById('rover-titulo').textContent = t('roverTitulo');
+  document.getElementById('rover-texto').textContent = t(MISSAO_ID === 'perseverance' ? 'dicaCuriosity_perseverance' : 'dicaCuriosity');
+  document.getElementById('rover-aproximar').textContent = t('roverAproximar');
+  document.getElementById('rover-fechar').textContent = t('roverFechar');
+  btnRota.textContent = rota ? t('roverParar') : t('roverRota');
+  btnRota.hidden = MISSAO_ID !== 'perseverance';
+  document.getElementById('rover-sol').textContent = '';
+  elRover.hidden = false;
+  const alvo = curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0));
+  voarPara(alvo, alvo.clone().add(new THREE.Vector3(3.2, 2.2, 3.2)));
+}
+function aproximarRover() {
+  if (!elRover.hidden) voarPara(curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0)), curiosity.position.clone().add(new THREE.Vector3(3.2, 2.2, 3.2)));
+}
+function fecharRover() { if (rota) pararRota(''); elRover.hidden = true; }
+function pararRota(mensagem) {
+  if (rota) curiosity.position.copy(rota.origem);
+  rota = null;
+  btnRota.textContent = t('roverRota');
+  if (mensagem) document.getElementById('rover-sol').textContent = mensagem;
+}
+function iniciarRota() {
+  if (!rotaReal) return;
+  if (rota) return pararRota('');
+  rota = { i: 0, tempo: 0, origem: curiosity.position.clone() };
+  btnRota.textContent = t('roverParar');
+}
+// avança a rota real: um ponto por vez, interpolando; o primeiro trecho (da base ao pouso) é mais longo
+function atualizarRota(dt) {
+  if (!rota || !rotaReal) return;
+  const a = rotaReal[rota.i], b = rotaReal[rota.i + 1];
+  if (!b) {
+    document.getElementById('rover-sol').textContent = t('roverFimRota', { sol: a[0] });
+    return pararRota(t('roverFimRota', { sol: a[0] }));
+  }
+  const duracao = rota.i === 0 ? 1.5 : 0.12;
+  rota.tempo += dt;
+  const k = Math.min(1, rota.tempo / duracao);
+  const x = a[2] + (b[2] - a[2]) * k, z = a[3] + (b[3] - a[3]) * k;
+  curiosity.position.set(x, altura(x, z), z);
+  if (k >= 1) {
+    rota.tempo = 0; rota.i++;
+    document.getElementById('rover-sol').textContent = t('roverSol', { sol: b[0] });
+  }
+}
+// zoom suave e acompanhamento do rover durante a rota
+function atualizarCamera(dt) {
+  if (voo) {
+    voo.tempo = Math.min(1, voo.tempo + dt / 1.2);
+    const k = THREE.MathUtils.smoothstep(voo.tempo, 0, 1);
+    controls.target.lerpVectors(voo.alvo0, voo.alvo1, k);
+    camera.position.lerpVectors(voo.pos0, voo.pos1, k);
+    if (voo.tempo >= 1) voo = null;
+  } else if (rota && !elRover.hidden) {
+    const alvo = curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0));
+    controls.target.lerp(alvo, 0.1);
+  }
+}
+document.getElementById('rover-aproximar').addEventListener('click', aproximarRover);
+document.getElementById('rover-fechar').addEventListener('click', fecharRover);
+btnRota.addEventListener('click', iniciarRota);
 
 // ---------- Próximo sol ----------
 const flash = new THREE.AmbientLight(0xfff2a8, 0);
@@ -671,6 +756,8 @@ let antes = performance.now();
 renderer.setAnimationLoop(() => {
   const agora = performance.now(), dt = Math.min(0.1, (agora - antes) / 1000);
   antes = agora;
+  atualizarRota(dt);
+  atualizarCamera(dt);
   controls.update();
   ceu.position.copy(camera.position);
   for (const o of grupoBase.children) {
