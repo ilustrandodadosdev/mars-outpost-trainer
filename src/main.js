@@ -1,6 +1,7 @@
 // Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { BARRAS, MODULOS, REGRAS, estadoInicial, podeConstruir, construir, avancarSol, protecaoAtual, avaliarMetas, METAS } from './regras.js';
 import { carregarClimaEspacial, montarCalendario } from './donki.js';
 import { t, trocarIdioma, idioma, fontes, definirMissao } from './textos.js';
@@ -271,6 +272,25 @@ curiosity.scale.setScalar(0.9);
 // o detector RAD (que brilha nas tempestades) é do Curiosity; o Perseverance não tem
 curiosity.userData.rad.visible = MISSAO_ID === 'curiosity';
 scene.add(curiosity);
+// na missão Perseverance, troca o rover de caixas pelo modelo 3D oficial da NASA (NASA/JPL-Caltech, 25042_Perseverance.glb).
+// Enquanto carrega, o rover antigo continua na tela. Se falhar, o antigo fica.
+if (MISSAO_ID === 'perseverance') {
+  new GLTFLoader().load('assets/modelos/25042_Perseverance.glb', (g) => {
+    const modelo = g.scene;
+    const pivo = new THREE.Group();
+    pivo.add(modelo);
+    // mesma escala de comprimento do rover antigo, centrado e com as rodas no chão
+    const caixa0 = new THREE.Box3().setFromObject(pivo);
+    const tam = caixa0.getSize(new THREE.Vector3());
+    const escala = 1.4 / Math.max(tam.x, tam.y, tam.z);
+    pivo.scale.setScalar(escala);
+    pivo.updateMatrixWorld(true);
+    const caixa = new THREE.Box3().setFromObject(pivo), centro = caixa.getCenter(new THREE.Vector3());
+    modelo.position.set(-centro.x / escala, -caixa.min.y / escala, -centro.z / escala);
+    curiosity.children.forEach(c => { if (c !== curiosity.userData.rad) c.visible = false; });
+    curiosity.add(pivo);
+  }, undefined, (e) => console.warn('modelo 3D do rover não carregou; mantendo o rover de caixas', e));
+}
 
 // ---------- MAVEN e Mars Odyssey: dois pontos de luz cruzando o céu ----------
 const clima = criarClima({ celular: CELULAR, alturaChao: altura, scene });
