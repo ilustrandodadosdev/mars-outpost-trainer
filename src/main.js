@@ -311,10 +311,12 @@ if (MISSAO_ID === 'perseverance') {
     const modelo = g.scene;
     const pivo = new THREE.Group();
     pivo.add(modelo);
+    separarRodas(modelo);
     // mesma escala de comprimento do rover antigo, centrado e com as rodas no chão
     const caixa0 = new THREE.Box3().setFromObject(pivo);
     const tam = caixa0.getSize(new THREE.Vector3());
     const escala = 1.4 / Math.max(tam.x, tam.y, tam.z);
+    for (const r of rodas) r.raioMundo = r.raioLocal * escala * 0.9;   // raio da roda no mundo do jogo
     pivo.scale.setScalar(escala);
     pivo.updateMatrixWorld(true);
     const caixa = new THREE.Box3().setFromObject(pivo), centro = caixa.getCenter(new THREE.Vector3());
@@ -624,8 +626,73 @@ function fecharRover() { if (rota) pararRota(''); if (exploracao?.ativo) sairExp
 // ---------- Modo exploração (Perseverance): dirigir o rover pelo relevo real ----------
 // Velocidade e inclinação são do jogo, não reais. O rover real anda bem mais devagar e tem tração que não modelamos.
 const VEL_EXPLORA = 0.4;     // unidades por segundo (1 unidade = 100 m): 40 m/s no jogo
-const INCLINACAO_MAX = 0.6;  // subida máxima (altura por unidade horizontal) que o rover aceita
-const TAXA_GIRO = 1.2;       // giro máximo do rover, em radianos por segundo
+const INCLINACAO_MAX = Math.tan(THREE.MathUtils.degToRad(30));  // subida máxima real (30°), medida sem o exagero vertical
+const TAXA_GIRO = 0.6;       // giro no lugar, em radianos por segundo (rover de rodas independentes)
+// altura sem o exagero vertical do relevo: a inclinação real do chão (ex.: tan 30° = 0,58)
+function inclinacaoReal(x, z) { return BASE_Y + (altura(x, z) - BASE_Y) / EXAGERO; }
+// as rodas são uma malha só no modelo: separa cada roda em um grupo próprio, com o próprio eixo, para girar
+let rodas = [];
+function separarRodas(modelo) {
+  // as rodas são triângulos das malhas dentro de "Wheels_objs" (três malhas grandes). Agrupa os triângulos
+  // em 6 rodas (k-means pelo centro de cada triângulo) e cada roda ganha o próprio eixo para girar.
+  // Chamada antes da escala: as medidas são do modelo original.
+  modelo.updateMatrixWorld(true);
+  const dentroDasRodas = o => { for (let p = o; p; p = p.parent) if (p.name === 'Wheels_objs') return true; return false; };
+  const malhas = []; modelo.traverse(o => { if (o.isMesh && dentroDasRodas(o)) malhas.push(o); });
+  if (malhas.length === 0) return;
+  const inv = new THREE.Matrix4().copy(modelo.matrixWorld).invert();
+  const v = new THREE.Vector3();
+  const todos = [];   // posições de todos os triângulos, já no sistema do modelo: 9 números por triângulo
+  for (const m of malhas) {
+    const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry;
+    const P = g.attributes.position.array, M = new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld);
+    const out = new Float32Array(P.length);
+    for (let i = 0; i < P.length; i += 3) { v.set(P[i], P[i + 1], P[i + 2]).applyMatrix4(M); out[i] = v.x; out[i + 1] = v.y; out[i + 2] = v.z; }
+    for (let i = 0; i < out.length; i += 9) todos.push(out.subarray(i, i + 9));
+  }
+  const nT = todos.length, K = 6;
+  const cen = todos.map(t => [(t[0] + t[3] + t[6]) / 3, (t[1] + t[4] + t[7]) / 3, (t[2] + t[5] + t[8]) / 3]);
+  const d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
+  // centros iniciais: os triângulos mais distantes entre si
+  const centros = [cen[0].slice()], perto = new Float32Array(nT).fill(Infinity);
+  while (centros.length < K) {
+    let far = 0, best = -1;
+    for (let i = 0; i < nT; i++) { perto[i] = Math.min(perto[i], d2(cen[i], centros[centros.length - 1])); if (perto[i] > best) { best = perto[i]; far = i; } }
+    centros.push(cen[far].slice());
+  }
+  const rot = new Int32Array(nT);
+  for (let it = 0; it < 25; it++) {
+    for (let i = 0; i < nT; i++) { let m = 0, md = Infinity; for (let k = 0; k < K; k++) { const dd = d2(cen[i], centros[k]); if (dd < md) { md = dd; m = k; } } rot[i] = m; }
+    for (let k = 0; k < K; k++) {
+      let sx = 0, sy = 0, sz = 0, n = 0;
+      for (let i = 0; i < nT; i++) if (rot[i] === k) { sx += cen[i][0]; sy += cen[i][1]; sz += cen[i][2]; n++; }
+      if (n) centros[k] = [sx / n, sy / n, sz / n];
+    }
+  }
+  const mat = malhas[0].material;
+  for (let k = 0; k < K; k++) {
+    const idx = []; for (let i = 0; i < nT; i++) if (rot[i] === k) idx.push(i);
+    if (idx.length < 4) continue;
+    const pos = new Float32Array(idx.length * 9);
+    idx.forEach((i, j) => pos.set(todos[i], j * 9));
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.computeBoundingBox();
+    const caixa = g.boundingBox, centro = caixa.getCenter(new THREE.Vector3()), tam = caixa.getSize(new THREE.Vector3());
+    // eixo da roda = menor dimensão; raio = metade da maior das outras duas (medidas do modelo original)
+    const dims = [tam.x, tam.y, tam.z], eixo = dims.indexOf(Math.min(...dims));
+    const raioLocal = Math.max(...dims.filter((_, i) => i !== eixo)) / 2;
+    g.translate(-centro.x, -centro.y, -centro.z);
+    g.computeVertexNormals();
+    const piv = new THREE.Group();
+    piv.position.copy(centro);
+    piv.add(new THREE.Mesh(g, mat));
+    modelo.add(piv);
+    rodas.push({ piv, eixo: new THREE.Vector3(eixo === 0 ? 1 : 0, eixo === 1 ? 1 : 0, eixo === 2 ? 1 : 0), raioLocal, raioMundo: 0, angulo: 0 });
+  }
+  // as malhas originais ficam vazias: as rodas agora são as peças separadas
+  for (const m of malhas) m.geometry = new THREE.BufferGeometry();
+}
 const teclas = new Set();
 let exploracao = null;       // {ativo, destino, origem}
 const btnExplora = document.getElementById('rover-explorar');
@@ -677,22 +744,23 @@ function atualizarExploracao(dt) {
   }
   const andando = dir.lengthSq() > 0;
   if (andando) dir.normalize();
-  // inércia: a velocidade muda aos poucos, nada de virar ou parar de repente
-  const alvo = dir.clone().multiplyScalar(andando ? VEL_EXPLORA : 0);
-  e.vel.lerp(alvo, Math.min(1, dt * 3));
-  // curva limitada: o rover gira aos poucos
-  if (e.vel.lengthSq() > 1e-4) {
-    const desejado = Math.atan2(-e.vel.x, -e.vel.z);
+  // o rover de rodas gira no lugar antes de andar: só avança quando já está quase virado para a direção
+  let alvoVel = new THREE.Vector3();
+  if (andando) {
+    const desejado = Math.atan2(-dir.x, -dir.z);
     const diff = Math.atan2(Math.sin(desejado - e.yaw), Math.cos(desejado - e.yaw));
     e.yaw += THREE.MathUtils.clamp(diff, -TAXA_GIRO * dt, TAXA_GIRO * dt);
+    if (Math.abs(diff) < 0.2) alvoVel = dir.clone().multiplyScalar(VEL_EXPLORA);
   }
+  // inércia: aceleração e freio limitados, a velocidade muda aos poucos
+  e.vel.lerp(alvoVel, Math.min(1, dt * 1.5));
   const x0 = curiosity.position.x, z0 = curiosity.position.z;
   const passo = Math.min(e.vel.length() * dt, 0.5);
   if (passo > 0) {
     const nx = THREE.MathUtils.clamp(x0 + e.vel.x * dt, -38, 38);
     const nz = THREE.MathUtils.clamp(z0 + e.vel.z * dt, -38, 38);
     // subida forte demais: o rover para
-    const subida = (altura(nx, nz) - altura(x0, z0)) / Math.max(1e-6, Math.hypot(nx - x0, nz - z0));
+    const subida = (inclinacaoReal(nx, nz) - inclinacaoReal(x0, z0)) / Math.max(1e-6, Math.hypot(nx - x0, nz - z0));
     if (subida > INCLINACAO_MAX) {
       e.destino = null; e.vel.set(0, 0, 0);
       document.getElementById('rover-sol').textContent = t('exploraInclinacao');
@@ -702,13 +770,16 @@ function atualizarExploracao(dt) {
       document.getElementById('rover-sol').textContent = t('exploraBloqueado');
     } else {
       curiosity.position.set(nx, altura(nx, nz), nz);
+      // as rodas giram conforme a distância andada (sem deslizar): ângulo = distância / raio
+      const dist = Math.hypot(nx - x0, nz - z0);
+      for (const r of rodas) { r.angulo += dist / r.raioMundo; r.piv.quaternion.setFromAxisAngle(r.eixo, r.angulo); }
     }
   }
   const x = curiosity.position.x, z = curiosity.position.z;
-  // inclina o rover conforme a inclinação do chão embaixo dele
+  // inclina o rover conforme a inclinação real do chão embaixo dele
   const eps = 0.6;
-  const dhx = (altura(x + eps, z) - altura(x - eps, z)) / (2 * eps);
-  const dhz = (altura(x, z + eps) - altura(x, z - eps)) / (2 * eps);
+  const dhx = (inclinacaoReal(x + eps, z) - inclinacaoReal(x - eps, z)) / (2 * eps);
+  const dhz = (inclinacaoReal(x, z + eps) - inclinacaoReal(x, z - eps)) / (2 * eps);
   const normal = new THREE.Vector3(-dhx, 1, -dhz).normalize();
   const inclina = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
   const guinada = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), e.yaw);
@@ -1067,5 +1138,5 @@ addEventListener('resize', () => { if (!elTut.hidden) posicionarPasso(); });
 
 // Só para gravar a demo (?demo na URL): expõe câmera e objetos ao script de captura.
 if (new URLSearchParams(location.search).has('demo')) {
-  window.__demo = { missao: MISSAO_ID, audio, THREE, camera, controls, curiosity, orbitadores, renderer, terreno, grupoBase, BASE_Y, clima, ceu, abrirTutorial };
+  window.__demo = { missao: MISSAO_ID, audio, THREE, camera, controls, curiosity, rodas: () => rodas, orbitadores, renderer, terreno, grupoBase, BASE_Y, clima, ceu, abrirTutorial };
 }
