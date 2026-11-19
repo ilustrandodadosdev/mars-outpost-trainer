@@ -199,3 +199,9 @@ body.em-debrief .metas { display: none; }   /* no debrief a comparação já mos
   body.em-debrief .fim { padding-top: calc(var(--topo-h, 140px) + 16px); align-items: start; }
   body.em-debrief .fim .caixa { max-height: calc(100dvh - var(--topo-h, 140px) - 32px); }
 }
+
+/* Esquema do trajeto real (debrief da Perseverance): um ponto anda da esquerda para a direita, sem sugerir rota exata */
+.trilha { position: relative; height: 6px; margin: 10px 4px 14px; border-radius: 3px; background: rgba(255, 210, 63, .25); }
+.ponto-rover { position: absolute; top: -5px; left: 0; width: 16px; height: 16px; border-radius: 50%; background: #ffd23f; box-shadow: 0 0 8px rgba(255, 210, 63, .7); animation: andar-trajeto 6s ease-in-out infinite alternate; }
+@keyframes andar-trajeto { from { left: 0; } to { left: calc(100% - 16px); } }
+@media (prefers-reduced-motion: reduce) { .ponto-rover { animation: none; left: 50%; transform: translateX(-50%); } }
