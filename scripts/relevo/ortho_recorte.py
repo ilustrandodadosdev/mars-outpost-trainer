@@ -2,7 +2,7 @@
 """Recorta a janela de 8 km do ortomosaico HiRISE (Mars 2020 TRN, 25 cm/px) por HTTP Range e
 exporta assets/relevo/jezero_tex.jpg: tons de cinza normalizados, com a mesma orientação da malha do jogo.
 Fonte: USGS Astrogeology, Mars 2020 TRN HiRISE Orthorectified Image Mosaic (uso: cite os autores).
-uso: python ortho_recorte.py <saida.jpg> [tamanho=2048]"""
+uso: python ortho_recorte.py <saida.jpg> [tamanho=2048] [lado_m=8000]"""
 import sys, math, numpy as np, requests, tifffile, fsspec
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
@@ -11,11 +11,11 @@ URL = 'https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_
 LAT_MAX, LON_MIN = 18.6693, 77.2229      # canto superior esquerdo do mosaico (metadados USGS)
 PPD = 237098.79                           # pixels por grau (metadados USGS)
 CLAT, CLON = 18.4534, 77.422              # centro do quadrado de 8 km (igual ao DTM de Jezero)
-LADO_M = 8000.0                           # lado do quadrado do jogo, em metros
 R = 3396190.0                             # raio de Marte (m)
 
 saida = sys.argv[1]
 N = int(sys.argv[2]) if len(sys.argv) > 2 else 2048
+LADO_M = float(sys.argv[3]) if len(sys.argv) > 3 else 8000.0   # 8000 = o quadrado do jogo; 1000 = detalhe em volta da base
 
 # janela em pixels: 8 km no chão = LADO_M/0,25 m em linha; em coluna, a equirretangular tem o mesmo
 # número de pixels por grau, então o quadrado no chão ocupa mais colunas (1/cos(lat)).

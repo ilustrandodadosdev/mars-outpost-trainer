@@ -191,6 +191,26 @@ const terreno = new THREE.Mesh(terrenoGeo, new THREE.MeshStandardMaterial({
 terreno.receiveShadow = true;
 scene.add(terreno);
 
+// Perseverance: detalhe alto em volta da base (1 km, cerca de 0,5 m por pixel), sobre o ortomosaico.
+// Cobre a área de construção; fora dela continua o ortomosaico de 4 m por pixel.
+if (relevo && MISSAO_ID === 'perseverance') {
+  try {
+    const det = await new THREE.TextureLoader().loadAsync('assets/relevo/jezero_detalhe.jpg');
+    det.colorSpace = THREE.SRGBColorSpace;
+    det.anisotropy = solo.map.anisotropy;
+    det.wrapS = det.wrapT = THREE.ClampToEdgeWrapping;
+    const geo = new THREE.PlaneGeometry(10, 10, 80, 80).rotateX(-Math.PI / 2);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) pos.setY(i, altura(pos.getX(i), pos.getZ(i)) + 0.03);
+    geo.computeVertexNormals();
+    const detalhe = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      map: det, color: MISSAO.cores[1], roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2,
+    }));
+    detalhe.receiveShadow = true;
+    scene.add(detalhe);
+  } catch (e) { console.warn('detalhe de Jezero não carregou; fica só o ortomosaico', e); }
+}
+
 // marcador do pouso do Perseverance (aproximado): o pouso e a Ha'ahóni ficam a 0,1 km um do outro
 // (M20_waypoints.json, NASA). A base está no centro do quadrado. Orientação do relevo (scripts/relevo/exportar_relevo.py): norte = +x, leste = +z.
 // Pouso: ~0,5 km ao sul (x -5) e ~1,6 km a leste (z +16) do centro.
