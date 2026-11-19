@@ -215,3 +215,7 @@ body.em-debrief .metas { display: none; }   /* no debrief a comparação já mos
 .rover-acoes { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
 .rover-acoes button { font: inherit; font-size: .8rem; font-weight: 700; color: var(--texto); background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; padding: .35rem .7rem; cursor: pointer; }
 .rover-acoes button:hover { border-color: var(--acento); }
+.rover-tempo { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; font-size: .8rem; }
+.rover-tempo[hidden] { display: none; }
+.rover-tempo button { font: inherit; font-weight: 700; color: var(--texto); background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; padding: .25rem .6rem; cursor: pointer; }
+.rover-tempo button[aria-pressed="true"] { border-color: var(--acento); color: var(--acento); }

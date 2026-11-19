@@ -614,6 +614,8 @@ function abrirRover() {
   btnRota.hidden = MISSAO_ID !== 'perseverance';
   document.getElementById('rover-sol').textContent = '';
   btnExplora.textContent = exploracao?.ativo ? t('exploraSair') : t('exploraAtivar');
+  document.getElementById('rover-tempo-rotulo').textContent = t('tempoRotulo');
+  definirTempo(tempoJogo);
   elRover.hidden = false;
   const alvo = curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0));
   voarPara(alvo, alvo.clone().add(new THREE.Vector3(3.2, 2.2, 3.2)));
@@ -625,7 +627,9 @@ function fecharRover() { if (rota) pararRota(''); if (exploracao?.ativo) sairExp
 
 // ---------- Modo exploração (Perseverance): dirigir o rover pelo relevo real ----------
 // Velocidade e inclinação são do jogo, não reais. O rover real anda bem mais devagar e tem tração que não modelamos.
-const VEL_EXPLORA = 0.4;     // unidades por segundo (1 unidade = 100 m): 40 m/s no jogo
+const VEL_EXPLORA = 0.042 / 100;   // velocidade real: 4,2 cm/s (máximo do Perseverance), em unidades do jogo (1 unidade = 100 m)
+let tempoJogo = 1;                 // o tempo do jogo: 1x (real), 60x ou 600x, para andar longe sem esperar horas
+const TEMPOS = [1, 60, 600];
 const INCLINACAO_MAX = Math.tan(THREE.MathUtils.degToRad(30));  // subida máxima real (30°), medida sem o exagero vertical
 const TAXA_GIRO = 0.6;       // giro no lugar, em radianos por segundo (rover de rodas independentes)
 // altura sem o exagero vertical do relevo: a inclinação real do chão (ex.: tan 30° = 0,58)
@@ -714,6 +718,7 @@ function iniciarExploracao() {
   exploracao = { ativo: true, destino: null, origem: curiosity.position.clone(), quat0: curiosity.quaternion.clone(), vel: new THREE.Vector3(), yaw: curiosity.rotation.y };
   btnExplora.textContent = t('exploraSair');
   btnRota.hidden = true;
+  document.getElementById('rover-tempo').hidden = false;
   document.getElementById('rover-sol').textContent = t('exploraDica');
 }
 function sairExploracao() {
@@ -722,11 +727,19 @@ function sairExploracao() {
   teclas.clear();
   btnExplora.textContent = t('exploraAtivar');
   btnRota.hidden = MISSAO_ID !== 'perseverance';
+  document.getElementById('rover-tempo').hidden = true;
+  definirTempo(1);
   document.getElementById('rover-sol').textContent = '';
 }
+function definirTempo(v) {
+  tempoJogo = v;
+  document.querySelectorAll('#rover-tempo button').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.t) === v)));
+}
+document.querySelectorAll('#rover-tempo button').forEach(b => b.addEventListener('click', () => definirTempo(Number(b.dataset.t))));
 function atualizarExploracao(dt) {
   if (!exploracao?.ativo) return;
   const e = exploracao;
+  dt *= tempoJogo;
   // direção pelo teclado, relativa à câmera (no plano do chão)
   const frente = new THREE.Vector3(); camera.getWorldDirection(frente); frente.y = 0;
   if (frente.lengthSq() < 1e-6) return;
