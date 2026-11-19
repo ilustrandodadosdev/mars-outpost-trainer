@@ -593,6 +593,7 @@ function fecharRover() { if (rota) pararRota(''); if (exploracao?.ativo) sairExp
 // Velocidade e inclinação são do jogo, não reais. O rover real anda bem mais devagar e tem tração que não modelamos.
 const VEL_EXPLORA = 0.4;     // unidades por segundo (1 unidade = 100 m): 40 m/s no jogo
 const INCLINACAO_MAX = 0.6;  // subida máxima (altura por unidade horizontal) que o rover aceita
+const TAXA_GIRO = 1.2;       // giro máximo do rover, em radianos por segundo
 const teclas = new Set();
 let exploracao = null;       // {ativo, destino, origem}
 const btnExplora = document.getElementById('rover-explorar');
@@ -611,13 +612,13 @@ function destinoSobPonteiro(ev) {
 }
 function iniciarExploracao() {
   pararRota('');
-  exploracao = { ativo: true, destino: null, origem: curiosity.position.clone() };
+  exploracao = { ativo: true, destino: null, origem: curiosity.position.clone(), quat0: curiosity.quaternion.clone(), vel: new THREE.Vector3(), yaw: curiosity.rotation.y };
   btnExplora.textContent = t('exploraSair');
   btnRota.hidden = true;
   document.getElementById('rover-sol').textContent = t('exploraDica');
 }
 function sairExploracao() {
-  if (exploracao) curiosity.position.copy(exploracao.origem);
+  if (exploracao) { curiosity.position.copy(exploracao.origem); curiosity.quaternion.copy(exploracao.quat0); }
   exploracao = null;
   teclas.clear();
   btnExplora.textContent = t('exploraAtivar');
@@ -626,6 +627,7 @@ function sairExploracao() {
 }
 function atualizarExploracao(dt) {
   if (!exploracao?.ativo) return;
+  const e = exploracao;
   // direção pelo teclado, relativa à câmera (no plano do chão)
   const frente = new THREE.Vector3(); camera.getWorldDirection(frente); frente.y = 0;
   if (frente.lengthSq() < 1e-6) return;
@@ -636,37 +638,49 @@ function atualizarExploracao(dt) {
   if (teclas.has('s') || teclas.has('arrowdown')) dir.sub(frente);
   if (teclas.has('d') || teclas.has('arrowright')) dir.add(direita);
   if (teclas.has('a') || teclas.has('arrowleft')) dir.sub(direita);
-  if (dir.lengthSq() > 0) {
-    exploracao.destino = null;
-  } else if (exploracao.destino) {
-    // toque no chão: anda em linha reta até lá
-    dir.set(exploracao.destino.x - curiosity.position.x, 0, exploracao.destino.z - curiosity.position.z);
-    if (dir.length() < 0.05) { exploracao.destino = null; return; }
-  } else {
-    controls.target.lerp(curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0)), 0.1);
-    return;
+  // toque no chão: vai em direção ao ponto
+  if (dir.lengthSq() === 0 && e.destino) {
+    dir.set(e.destino.x - curiosity.position.x, 0, e.destino.z - curiosity.position.z);
+    if (dir.length() < 0.05) { e.destino = null; dir.set(0, 0, 0); }
   }
-  dir.normalize();
-  const passo = Math.min(VEL_EXPLORA * dt, 0.5);
+  const andando = dir.lengthSq() > 0;
+  if (andando) dir.normalize();
+  // inércia: a velocidade muda aos poucos, nada de virar ou parar de repente
+  const alvo = dir.clone().multiplyScalar(andando ? VEL_EXPLORA : 0);
+  e.vel.lerp(alvo, Math.min(1, dt * 3));
+  // curva limitada: o rover gira aos poucos
+  if (e.vel.lengthSq() > 1e-4) {
+    const desejado = Math.atan2(-e.vel.x, -e.vel.z);
+    const diff = Math.atan2(Math.sin(desejado - e.yaw), Math.cos(desejado - e.yaw));
+    e.yaw += THREE.MathUtils.clamp(diff, -TAXA_GIRO * dt, TAXA_GIRO * dt);
+  }
   const x0 = curiosity.position.x, z0 = curiosity.position.z;
-  const nx = THREE.MathUtils.clamp(x0 + dir.x * passo, -38, 38);
-  const nz = THREE.MathUtils.clamp(z0 + dir.z * passo, -38, 38);
-  // subida forte demais: o rover para
-  const subida = (altura(nx, nz) - altura(x0, z0)) / Math.max(1e-6, Math.hypot(nx - x0, nz - z0));
-  if (subida > INCLINACAO_MAX) {
-    exploracao.destino = null;
-    document.getElementById('rover-sol').textContent = t('exploraInclinacao');
-    return;
+  const passo = Math.min(e.vel.length() * dt, 0.5);
+  if (passo > 0) {
+    const nx = THREE.MathUtils.clamp(x0 + e.vel.x * dt, -38, 38);
+    const nz = THREE.MathUtils.clamp(z0 + e.vel.z * dt, -38, 38);
+    // subida forte demais: o rover para
+    const subida = (altura(nx, nz) - altura(x0, z0)) / Math.max(1e-6, Math.hypot(nx - x0, nz - z0));
+    if (subida > INCLINACAO_MAX) {
+      e.destino = null; e.vel.set(0, 0, 0);
+      document.getElementById('rover-sol').textContent = t('exploraInclinacao');
+    } else if (ocupado().has(`${Math.round(nx)},${Math.round(nz)}`) && Math.abs(nx) <= MEIO + 1 && Math.abs(nz) <= MEIO + 1) {
+      // construção no caminho: para antes dela
+      e.destino = null; e.vel.set(0, 0, 0);
+      document.getElementById('rover-sol').textContent = t('exploraBloqueado');
+    } else {
+      curiosity.position.set(nx, altura(nx, nz), nz);
+    }
   }
-  // construção no caminho: para antes dela
-  if (ocupado().has(`${Math.round(nx)},${Math.round(nz)}`) && Math.abs(nx) <= MEIO + 1 && Math.abs(nz) <= MEIO + 1) {
-    exploracao.destino = null;
-    document.getElementById('rover-sol').textContent = t('exploraBloqueado');
-    return;
-  }
-  curiosity.position.set(nx, altura(nx, nz), nz);
-  // o modelo olha para onde anda
-  if (Math.hypot(nx - x0, nz - z0) > 1e-4) curiosity.rotation.y = Math.atan2(-(nx - x0), -(nz - z0));
+  const x = curiosity.position.x, z = curiosity.position.z;
+  // inclina o rover conforme a inclinação do chão embaixo dele
+  const eps = 0.6;
+  const dhx = (altura(x + eps, z) - altura(x - eps, z)) / (2 * eps);
+  const dhz = (altura(x, z + eps) - altura(x, z - eps)) / (2 * eps);
+  const normal = new THREE.Vector3(-dhx, 1, -dhz).normalize();
+  const inclina = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+  const guinada = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), e.yaw);
+  curiosity.quaternion.copy(inclina).multiply(guinada);
   controls.target.lerp(curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0)), 0.2);
 }
 function pararRota(mensagem) {
