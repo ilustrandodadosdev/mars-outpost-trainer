@@ -531,6 +531,8 @@ renderer.domElement.addEventListener('pointermove', ev => {
 renderer.domElement.addEventListener('pointerdown', ev => { inicioClique = { x: ev.clientX, y: ev.clientY }; });
 renderer.domElement.addEventListener('pointerup', ev => {
   if (!inicioClique || Math.hypot(ev.clientX - inicioClique.x, ev.clientY - inicioClique.y) > 5) return; // foi arrasto de câmera
+  // modo exploração: o clique no chão é o destino do rover, e não constrói nada
+  if (exploracao?.ativo) { if (!roverSobPonteiro(ev)) destinoSobPonteiro(ev); return; }
   // clique no rover (sem módulo selecionado): abre o painel dele
   if (!selecionado && roverSobPonteiro(ev)) return abrirRover();
   const c = celulaSobPonteiro(ev);
@@ -577,6 +579,7 @@ function abrirRover() {
   btnRota.textContent = rota ? t('roverParar') : t('roverRota');
   btnRota.hidden = MISSAO_ID !== 'perseverance';
   document.getElementById('rover-sol').textContent = '';
+  btnExplora.textContent = exploracao?.ativo ? t('exploraSair') : t('exploraAtivar');
   elRover.hidden = false;
   const alvo = curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0));
   voarPara(alvo, alvo.clone().add(new THREE.Vector3(3.2, 2.2, 3.2)));
@@ -584,7 +587,88 @@ function abrirRover() {
 function aproximarRover() {
   if (!elRover.hidden) voarPara(curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0)), curiosity.position.clone().add(new THREE.Vector3(3.2, 2.2, 3.2)));
 }
-function fecharRover() { if (rota) pararRota(''); elRover.hidden = true; }
+function fecharRover() { if (rota) pararRota(''); if (exploracao?.ativo) sairExploracao(); elRover.hidden = true; }
+
+// ---------- Modo exploração (Perseverance): dirigir o rover pelo relevo real ----------
+// Velocidade e inclinação são do jogo, não reais. O rover real anda bem mais devagar e tem tração que não modelamos.
+const VEL_EXPLORA = 0.4;     // unidades por segundo (1 unidade = 100 m): 40 m/s no jogo
+const INCLINACAO_MAX = 0.6;  // subida máxima (altura por unidade horizontal) que o rover aceita
+const teclas = new Set();
+let exploracao = null;       // {ativo, destino, origem}
+const btnExplora = document.getElementById('rover-explorar');
+const TECLAS_DIRIGIR = /^(w|a|s|d|arrowup|arrowdown|arrowleft|arrowright)$/;
+addEventListener('keydown', e => {
+  if (exploracao?.ativo && TECLAS_DIRIGIR.test(e.key.toLowerCase())) { teclas.add(e.key.toLowerCase()); e.preventDefault(); }
+});
+addEventListener('keyup', e => teclas.delete(e.key.toLowerCase()));
+addEventListener('blur', () => teclas.clear());
+function destinoSobPonteiro(ev) {
+  ponteiro.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ponteiro, camera);
+  const hit = ray.intersectObject(terreno)[0];
+  if (hit) exploracao.destino = { x: hit.point.x, z: hit.point.z };
+  return !!hit;
+}
+function iniciarExploracao() {
+  pararRota('');
+  exploracao = { ativo: true, destino: null, origem: curiosity.position.clone() };
+  btnExplora.textContent = t('exploraSair');
+  btnRota.hidden = true;
+  document.getElementById('rover-sol').textContent = t('exploraDica');
+}
+function sairExploracao() {
+  if (exploracao) curiosity.position.copy(exploracao.origem);
+  exploracao = null;
+  teclas.clear();
+  btnExplora.textContent = t('exploraAtivar');
+  btnRota.hidden = MISSAO_ID !== 'perseverance';
+  document.getElementById('rover-sol').textContent = '';
+}
+function atualizarExploracao(dt) {
+  if (!exploracao?.ativo) return;
+  // direção pelo teclado, relativa à câmera (no plano do chão)
+  const frente = new THREE.Vector3(); camera.getWorldDirection(frente); frente.y = 0;
+  if (frente.lengthSq() < 1e-6) return;
+  frente.normalize();
+  const direita = new THREE.Vector3(-frente.z, 0, frente.x);
+  const dir = new THREE.Vector3();
+  if (teclas.has('w') || teclas.has('arrowup')) dir.add(frente);
+  if (teclas.has('s') || teclas.has('arrowdown')) dir.sub(frente);
+  if (teclas.has('d') || teclas.has('arrowright')) dir.add(direita);
+  if (teclas.has('a') || teclas.has('arrowleft')) dir.sub(direita);
+  if (dir.lengthSq() > 0) {
+    exploracao.destino = null;
+  } else if (exploracao.destino) {
+    // toque no chão: anda em linha reta até lá
+    dir.set(exploracao.destino.x - curiosity.position.x, 0, exploracao.destino.z - curiosity.position.z);
+    if (dir.length() < 0.05) { exploracao.destino = null; return; }
+  } else {
+    controls.target.lerp(curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0)), 0.1);
+    return;
+  }
+  dir.normalize();
+  const passo = Math.min(VEL_EXPLORA * dt, 0.5);
+  const x0 = curiosity.position.x, z0 = curiosity.position.z;
+  const nx = THREE.MathUtils.clamp(x0 + dir.x * passo, -38, 38);
+  const nz = THREE.MathUtils.clamp(z0 + dir.z * passo, -38, 38);
+  // subida forte demais: o rover para
+  const subida = (altura(nx, nz) - altura(x0, z0)) / Math.max(1e-6, Math.hypot(nx - x0, nz - z0));
+  if (subida > INCLINACAO_MAX) {
+    exploracao.destino = null;
+    document.getElementById('rover-sol').textContent = t('exploraInclinacao');
+    return;
+  }
+  // construção no caminho: para antes dela
+  if (ocupado().has(`${Math.round(nx)},${Math.round(nz)}`) && Math.abs(nx) <= MEIO + 1 && Math.abs(nz) <= MEIO + 1) {
+    exploracao.destino = null;
+    document.getElementById('rover-sol').textContent = t('exploraBloqueado');
+    return;
+  }
+  curiosity.position.set(nx, altura(nx, nz), nz);
+  // o modelo olha para onde anda
+  if (Math.hypot(nx - x0, nz - z0) > 1e-4) curiosity.rotation.y = Math.atan2(-(nx - x0), -(nz - z0));
+  controls.target.lerp(curiosity.position.clone().add(new THREE.Vector3(0, 0.8, 0)), 0.2);
+}
 function pararRota(mensagem) {
   if (rota) curiosity.position.copy(rota.origem);
   rota = null;
@@ -592,7 +676,7 @@ function pararRota(mensagem) {
   if (mensagem) document.getElementById('rover-sol').textContent = mensagem;
 }
 function iniciarRota() {
-  if (!rotaReal) return;
+  if (!rotaReal || exploracao?.ativo) return;
   if (rota) return pararRota('');
   rota = { i: 0, tempo: 0, origem: curiosity.position.clone() };
   btnRota.textContent = t('roverParar');
@@ -631,6 +715,7 @@ function atualizarCamera(dt) {
 document.getElementById('rover-aproximar').addEventListener('click', aproximarRover);
 document.getElementById('rover-fechar').addEventListener('click', fecharRover);
 btnRota.addEventListener('click', iniciarRota);
+btnExplora.addEventListener('click', () => (exploracao?.ativo ? sairExploracao() : iniciarExploracao()));
 
 // ---------- Próximo sol ----------
 const flash = new THREE.AmbientLight(0xfff2a8, 0);
@@ -757,6 +842,7 @@ renderer.setAnimationLoop(() => {
   const agora = performance.now(), dt = Math.min(0.1, (agora - antes) / 1000);
   antes = agora;
   atualizarRota(dt);
+  atualizarExploracao(dt);
   atualizarCamera(dt);
   controls.update();
   ceu.position.copy(camera.position);
