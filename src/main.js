@@ -60,42 +60,42 @@ const scene = new THREE.Scene();
 const DIR_SOL = new THREE.Vector3(-0.8, 0.37, -0.45).normalize();
 scene.background = CORES_CEU.horizonte;
 // névoa de poeira da estação: quanto mais poeira, mais perto o horizonte some
-scene.fog = new THREE.Fog(CORES_CEU.horizonte, 30 - POEIRA_ESTACAO * 25, 95 - POEIRA_ESTACAO * 30);
+scene.fog = new THREE.Fog(CORES_CEU.horizonte, 300 - POEIRA_ESTACAO * 200, 2500 - POEIRA_ESTACAO * 1200);
 const ceu = criarCeu(DIR_SOL);
 ceu.material.uniforms.poeira.value = POEIRA_ESTACAO;
 scene.add(ceu);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200);
-camera.position.set(8.5, 8, 10);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 30000);
+camera.position.set(14, 10, 16);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 1.5, 0);
+controls.target.set(0, 1, 0);
 controls.enableDamping = true;
 controls.enablePan = false;
-controls.minDistance = 6;
-controls.maxDistance = 36;
+controls.minDistance = 3;
+controls.maxDistance = 120;
 controls.minPolarAngle = 0.3;
 controls.maxPolarAngle = 1.42;
 
 scene.add(new THREE.HemisphereLight(0xe8b890, 0x5a2c1a, 1.4));
 const sol = new THREE.DirectionalLight(0xfff1e0, 3.4);
-sol.position.copy(DIR_SOL).multiplyScalar(45);
+sol.position.copy(DIR_SOL).multiplyScalar(4500);
 sol.castShadow = true;
 const CEL_SOMBRA = matchMedia('(pointer: coarse)').matches;
 sol.shadow.mapSize.set(CEL_SOMBRA ? 1024 : 2048, CEL_SOMBRA ? 1024 : 2048);
 sol.shadow.bias = -0.0004;
 sol.shadow.normalBias = 0.02;
-Object.assign(sol.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 110 });
+Object.assign(sol.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, near: 1, far: 9000 });
 scene.add(sol);
 
 // ---------- Terreno: relevo real do local da missão (USGS, DEMs de 1 m) ----------
 // assets/relevo/<local>.bin = 257x257 alturas Uint16 de um quadrado de 8 km.
 // gale: centrado ~3,7 km ao sul do pouso do Curiosity; sul = -z, a câmera olha para o Monte Sharp.
 // jezero: centrado ~1,7 km a oeste do pouso do Perseverance; oeste = -z, a câmera olha para o delta.
-// 1 unidade = 100 m na horizontal; relevo com exagero vertical declarado (EXAGERO) para ser legível.
+// 1 unidade = 1 m; relevo com exagero vertical declarado (EXAGERO) para ser legível.
 // A base fica numa praça nivelada no centro; fora dela o chão é o de Gale de verdade.
-const BASE_Y = 1.4;
+const BASE_Y = 0;
 const CELULAR = matchMedia('(pointer: coarse)').matches;
-const LADO = 80;
+const LADO = 8000;   // 8 km em metros (1 unidade = 1 m)
 const EXAGERO = MISSAO.exagero;   // exagero vertical declarado nas fontes (2× Gale, 4× Jezero)
 async function carregarRelevo() {
   try {
@@ -121,7 +121,9 @@ function alturaReal(x, z) {
   const A = relevo.alt, k = j * n + i;
   return (A[k] * (1 - a) + A[k + 1] * a) * (1 - b) + (A[k + n] * (1 - a) + A[k + n + 1] * a) * b;
 }
-const MEIO = 5; // área de construção: células de -5 a 5
+const CELULA = 2;   // célula de construção: 2 m
+const MEIO = 5;     // área de construção: células de -5 a 5 (10 m para cada lado)
+const MEIO_M = MEIO * CELULA;
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
 function ruido(x, y) {
   const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
@@ -131,7 +133,7 @@ function ruido(x, y) {
 }
 const CRATERAS = [[-15, -9, 5, 2.2], [17, 6, 3.5, 1.6], [4, 19, 6, 2.6], [-12, 15, 2.5, 1.1]];
 function altura(x, z) {
-  const k = THREE.MathUtils.smoothstep(Math.hypot(x, z), MEIO + 1.5, MEIO + 7);
+  const k = THREE.MathUtils.smoothstep(Math.hypot(x, z), MEIO_M + 3, MEIO_M + 14);
   if (relevo) return THREE.MathUtils.lerp(BASE_Y, BASE_Y + alturaReal(x, z), k);
   let h = ruido(x * 0.09, z * 0.09) * 3.2 + ruido(x * 0.3, z * 0.3) * 0.7;
   for (const [cx, cz, r, p] of CRATERAS) {
@@ -171,7 +173,7 @@ if (relevo) {
 }
 terrenoGeo.setAttribute('color', new THREE.Float32BufferAttribute(cores, 3));
 const solo = criarTexturasSolo(renderer, CELULAR);
-for (const tx of [solo.map, solo.normalMap]) tx.repeat.set(48, 48);   // um ladrilho = ~170 m
+for (const tx of [solo.map, solo.normalMap]) tx.repeat.set(4700, 4700);   // um ladrilho = ~170 m
 // Perseverance: o chão usa o ortomosaico HiRISE real da janela de 8 km (USGS, cinza normalizado, tingido pela cor do vértice).
 // Se não carregar, fica o solo gerado, como antes.
 let mapaTerreno = solo.map;
@@ -199,7 +201,7 @@ if (relevo && MISSAO_ID === 'perseverance') {
     det.colorSpace = THREE.SRGBColorSpace;
     det.anisotropy = solo.map.anisotropy;
     det.wrapS = det.wrapT = THREE.ClampToEdgeWrapping;
-    const geo = new THREE.PlaneGeometry(10, 10, 80, 80).rotateX(-Math.PI / 2);
+    const geo = new THREE.PlaneGeometry(1000, 1000, 80, 80).rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) pos.setY(i, altura(pos.getX(i), pos.getZ(i)) + 0.03);
     geo.computeVertexNormals();
@@ -215,7 +217,7 @@ if (relevo && MISSAO_ID === 'perseverance') {
 // (M20_waypoints.json, NASA). A base está no centro do quadrado. Orientação do relevo (scripts/relevo/exportar_relevo.py): norte = +x, leste = +z.
 // Pouso: ~0,5 km ao sul (x -5) e ~1,6 km a leste (z +16) do centro.
 if (relevo && MISSAO_ID === 'perseverance') {
-  const px = -5, pz = 16, py = altura(px, pz) + 1.2;
+  const px = -500, pz = 1600, py = altura(px, pz) + 12;
   const pino = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd23f }));
   pino.position.set(px, py, pz);
   scene.add(pino);
@@ -224,17 +226,17 @@ if (relevo && MISSAO_ID === 'perseverance') {
   const g = tela.getContext('2d');
   g.font = 'bold 56px sans-serif'; g.fillStyle = '#ffd23f'; g.fillText(t('marcaPouso'), 10, 84);
   const rotulo = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(tela), depthTest: false }));
-  rotulo.scale.set(8, 2, 1);
-  rotulo.position.set(px, py + 2.5, pz);
+  rotulo.scale.set(800, 200, 1);
+  rotulo.position.set(px, py + 25, pz);
   scene.add(rotulo);
 }
 
 // pedras low-poly fora da área da base
 const matPedra = new THREE.MeshStandardMaterial({ color: 0x6e3a22, flatShading: true, roughness: 1 });
 for (let i = 0; i < 70; i++) {
-  const x = (hash(i, 1) - 0.5) * 60, z = (hash(i, 2) - 0.5) * 60;
-  if (Math.hypot(x, z) < MEIO + 3) continue;
-  const s = 0.08 + hash(i, 3) * (relevo ? 0.3 : 0.9);
+  const x = (hash(i, 1) - 0.5) * 6000, z = (hash(i, 2) - 0.5) * 6000;
+  if (Math.hypot(x, z) < MEIO_M + 30) continue;
+  const s = 0.3 + hash(i, 3) * (relevo ? 1.2 : 3.6);   // raio em metros
   const p = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), matPedra);
   p.position.set(x, altura(x, z) + s * 0.3, z);
   p.rotation.set(hash(i, 4) * 3, hash(i, 5) * 3, 0);
@@ -242,7 +244,7 @@ for (let i = 0; i < 70; i++) {
   scene.add(p);
 }
 
-const grade = new THREE.GridHelper(MEIO * 2 + 1, MEIO * 2 + 1, 0xffd2b0, 0xffd2b0);
+const grade = new THREE.GridHelper((MEIO * 2 + 1) * CELULA, MEIO * 2 + 1, 0xffd2b0, 0xffd2b0);
 grade.position.y = BASE_Y + 0.01;
 grade.material.transparent = true;
 grade.material.opacity = 0.18;
@@ -252,7 +254,11 @@ scene.add(grade);
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.7, ...extra });
 function criarModulo(tipo) {
   const g = new THREE.Group();
-  const add = (geom, m, y = 0) => { const x = new THREE.Mesh(geom, m); x.position.y = y; x.castShadow = x.receiveShadow = true; g.add(x); return x; };
+  // as medidas abaixo são de uma célula de 1 unidade: o conteúdo fica num grupo escalado para a célula de 2 m
+  const dentro = new THREE.Group();
+  dentro.scale.setScalar(CELULA);
+  g.add(dentro);
+  const add = (geom, m, y = 0) => { const x = new THREE.Mesh(geom, m); x.position.y = y; x.castShadow = x.receiveShadow = true; dentro.add(x); return x; };
   if (tipo === 'habitat') {
     add(new THREE.CylinderGeometry(0.45, 0.45, 0.35, 10), mat(0xe9e6e1), 0.175);
     add(new THREE.SphereGeometry(0.45, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), mat(0xf5f3ef), 0.35);
@@ -298,7 +304,7 @@ function criarCuriosity() {
   return g;
 }
 const curiosity = criarCuriosity();
-curiosity.position.set(2.5, altura(2.5, -8.2), -8.2);
+curiosity.position.set(250, altura(250, -820), -820);
 curiosity.rotation.y = -0.5;
 curiosity.scale.setScalar(0.9);
 // o detector RAD (que brilha nas tempestades) é do Curiosity; o Perseverance não tem
@@ -315,7 +321,7 @@ if (MISSAO_ID === 'perseverance') {
     // mesma escala de comprimento do rover antigo, centrado e com as rodas no chão
     const caixa0 = new THREE.Box3().setFromObject(pivo);
     const tam = caixa0.getSize(new THREE.Vector3());
-    const escala = 1.4 / Math.max(tam.x, tam.y, tam.z);
+    const escala = 3 / Math.max(tam.x, tam.y, tam.z);   // rover real: cerca de 3 m de comprimento
     for (const r of rodas) r.raioMundo = r.raioLocal * escala * 0.9;   // raio da roda no mundo do jogo
     pivo.scale.setScalar(escala);
     pivo.updateMatrixWorld(true);
@@ -535,7 +541,7 @@ function celulaSobPonteiro(ev) {
   ray.setFromCamera(ponteiro, camera);
   const hit = ray.intersectObject(terreno)[0];
   if (!hit) return null;
-  const x = Math.round(hit.point.x), z = Math.round(hit.point.z);
+  const x = Math.round(hit.point.x / CELULA), z = Math.round(hit.point.z / CELULA);
   return Math.abs(x) <= MEIO && Math.abs(z) <= MEIO ? { x, z } : null;
 }
 
@@ -545,7 +551,7 @@ function atualizarFantasma() {
   fantasma = criarModulo(selecionado);
   const livre = !ocupado().has(`${celula.x},${celula.z}`);
   fantasma.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.5; if (!livre) o.material.color.set(0xff4040); o.castShadow = false; } });
-  fantasma.position.set(celula.x, BASE_Y, celula.z);
+  fantasma.position.set(celula.x * CELULA, BASE_Y, celula.z * CELULA);
   grupoBase.add(fantasma);
 }
 
@@ -573,7 +579,7 @@ renderer.domElement.addEventListener('pointerup', ev => {
   if (!selecionado || !c || ocupado().has(`${c.x},${c.z}`) || !podeConstruir(estado, selecionado)) return;
   construir(estado, selecionado, c.x, c.z);
   const obj = criarModulo(selecionado);
-  obj.position.set(c.x, BASE_Y, c.z);
+  obj.position.set(c.x * CELULA, BASE_Y, c.z * CELULA);
   obj.scale.setScalar(0.01);
   obj.userData.crescer = true;
   grupoBase.add(obj);
@@ -627,7 +633,7 @@ function fecharRover() { if (rota) pararRota(''); if (exploracao?.ativo) sairExp
 
 // ---------- Modo exploração (Perseverance): dirigir o rover pelo relevo real ----------
 // Velocidade e inclinação são do jogo, não reais. O rover real anda bem mais devagar e tem tração que não modelamos.
-const VEL_EXPLORA = 0.042 / 100;   // velocidade real: 4,2 cm/s (máximo do Perseverance), em unidades do jogo (1 unidade = 100 m)
+const VEL_EXPLORA = 0.042;   // velocidade real: 4,2 cm/s (máximo do Perseverance), em unidades do jogo (1 unidade = 100 m)
 let tempoJogo = 1;                 // o tempo do jogo: 1x (real), 60x ou 600x, para andar longe sem esperar horas
 const TEMPOS = [1, 60, 600];
 const INCLINACAO_MAX = Math.tan(THREE.MathUtils.degToRad(30));  // subida máxima real (30°), medida sem o exagero vertical
@@ -768,16 +774,16 @@ function atualizarExploracao(dt) {
   // inércia: aceleração e freio limitados, a velocidade muda aos poucos
   e.vel.lerp(alvoVel, Math.min(1, dt * 1.5));
   const x0 = curiosity.position.x, z0 = curiosity.position.z;
-  const passo = Math.min(e.vel.length() * dt, 0.5);
+  const passo = Math.min(e.vel.length() * dt, 2);
   if (passo > 0) {
-    const nx = THREE.MathUtils.clamp(x0 + e.vel.x * dt, -38, 38);
-    const nz = THREE.MathUtils.clamp(z0 + e.vel.z * dt, -38, 38);
+    const nx = THREE.MathUtils.clamp(x0 + e.vel.x * dt, -3950, 3950);
+    const nz = THREE.MathUtils.clamp(z0 + e.vel.z * dt, -3950, 3950);
     // subida forte demais: o rover para
     const subida = (inclinacaoReal(nx, nz) - inclinacaoReal(x0, z0)) / Math.max(1e-6, Math.hypot(nx - x0, nz - z0));
     if (subida > INCLINACAO_MAX) {
       e.destino = null; e.vel.set(0, 0, 0);
       document.getElementById('rover-sol').textContent = t('exploraInclinacao');
-    } else if (ocupado().has(`${Math.round(nx)},${Math.round(nz)}`) && Math.abs(nx) <= MEIO + 1 && Math.abs(nz) <= MEIO + 1) {
+    } else if (ocupado().has(`${Math.round(nx / CELULA)},${Math.round(nz / CELULA)}`) && Math.abs(nx) <= MEIO_M + CELULA && Math.abs(nz) <= MEIO_M + CELULA) {
       // construção no caminho: para antes dela
       e.destino = null; e.vel.set(0, 0, 0);
       document.getElementById('rover-sol').textContent = t('exploraBloqueado');

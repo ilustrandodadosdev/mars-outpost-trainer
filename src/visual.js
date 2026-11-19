@@ -37,7 +37,7 @@ export function criarCeu(dirSol) {
         #include <colorspace_fragment>
       }`,
   });
-  const ceu = new THREE.Mesh(new THREE.SphereGeometry(180, 32, 16), mat);
+  const ceu = new THREE.Mesh(new THREE.SphereGeometry(18000, 32, 16), mat);
   ceu.renderOrder = -1;
   ceu.frustumCulled = false;
   return ceu;
@@ -207,18 +207,18 @@ export function criarClima({ celular, alturaChao, scene }) {
     return r;
   });
   function renascer(r) {
-    const a = rnd() * Math.PI * 2, d = 14 + rnd() * 30;
+    const a = rnd() * Math.PI * 2, d = 1400 + rnd() * 3000;   // 1,4–4,4 km (em metros)
     const u = r.material.uniforms;
     u.base.value.set(Math.cos(a) * d, 0, Math.sin(a) * d);
-    u.alturaR.value = 1.5 + rnd() * 2.5;     // 150–400 m (1 unidade = 100 m)
-    u.largura.value = 0.1 + rnd() * 0.2;     // 10–30 m
+    u.alturaR.value = 150 + rnd() * 250;     // 150–400 m (1 unidade = 1 m)
+    u.largura.value = 10 + rnd() * 20;       // 10–30 m
     r.userData.idade = 0;
     r.userData.duracao = 25 + rnd() * 20;
   }
   rede.forEach(renascer);
 
   scene.add(grupo);
-  const ventoRede = VENTO.clone().multiplyScalar(0.08);
+  const ventoRede = VENTO.clone().multiplyScalar(8);   // vento em metros por segundo
   return {
     grupo,
     atualizar(dt, tempo, camera, renderer) {
