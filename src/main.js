@@ -1139,6 +1139,21 @@ document.getElementById('tut-proximo').addEventListener('click', () => irPasso(1
 document.getElementById('tut-voltar').addEventListener('click', () => irPasso(-1));
 document.getElementById('tut-pular').addEventListener('click', fecharTutorial);
 document.getElementById('ajuda').addEventListener('click', abrirTutorial);
+// visão geral: sobe a câmera e mostra o mapa de 8 km inteiro (o zoom normal é só da base)
+const btnVisao = document.getElementById('visao');
+let emVisaoGeral = false;
+function alternarVisaoGeral() {
+  emVisaoGeral = !emVisaoGeral;
+  btnVisao.setAttribute('aria-pressed', String(emVisaoGeral));
+  btnVisao.title = t('visaoGeral');
+  btnVisao.textContent = emVisaoGeral ? '🏠' : '🗺';
+  controls.maxDistance = emVisaoGeral ? 9000 : 120;
+  scene.fog.far = emVisaoGeral ? 40000 : 2500 - POEIRA_ESTACAO * 1200;
+  if (emVisaoGeral) voarPara(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 5200, 3800));
+  else voarPara(new THREE.Vector3(0, 1, 0), new THREE.Vector3(14, 10, 16));
+}
+btnVisao.textContent = '🗺';
+btnVisao.addEventListener('click', alternarVisaoGeral);
 addEventListener('keydown', e => {
   if (elTut.hidden) return;
   const p = PASSOS[passoTut];
