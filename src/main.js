@@ -179,12 +179,12 @@ terreno.receiveShadow = true;
 scene.add(terreno);
 
 // marcador do pouso do Perseverance (aproximado): o pouso e a Ha'ahóni ficam a 0,1 km um do outro
-// (M20_waypoints.json, NASA). A base está no centro do quadrado e o pouso ~1,6 km a leste (z+).
-// A diferença norte-sul (~0,5 km) é ignorada: o marcador é aproximado, não a posição exata.
+// (M20_waypoints.json, NASA). A base está no centro do quadrado. Orientação do relevo (scripts/relevo/exportar_relevo.py): norte = +x, leste = +z.
+// Pouso: ~0,5 km ao sul (x -5) e ~1,6 km a leste (z +16) do centro.
 if (relevo && MISSAO_ID === 'perseverance') {
-  const pz = 16, py = altura(0, pz) + 1.2;
+  const px = -5, pz = 16, py = altura(px, pz) + 1.2;
   const pino = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd23f }));
-  pino.position.set(0, py, pz);
+  pino.position.set(px, py, pz);
   scene.add(pino);
   const tela = document.createElement('canvas');
   tela.width = 512; tela.height = 128;
@@ -192,7 +192,7 @@ if (relevo && MISSAO_ID === 'perseverance') {
   g.font = 'bold 56px sans-serif'; g.fillStyle = '#ffd23f'; g.fillText(t('marcaPouso'), 10, 84);
   const rotulo = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(tela), depthTest: false }));
   rotulo.scale.set(8, 2, 1);
-  rotulo.position.set(0, py + 2.5, pz);
+  rotulo.position.set(px, py + 2.5, pz);
   scene.add(rotulo);
 }
 
