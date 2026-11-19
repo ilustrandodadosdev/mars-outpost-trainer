@@ -314,6 +314,7 @@ const FONTES_MISSAO = {
   ],
   perseverance: [
     { rotulo: 'NASA — Perseverance rover mission', url: 'https://science.nasa.gov/mission/mars-2020-perseverance/' },
+    { rotulo: 'USGS Astrogeology — Mars 2020 TRN HiRISE orthorectified mosaic (ground texture, grey, tinted; cite the authors)', url: 'https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_hirise_orthorectified_image_mosaic' },
     { rotulo: 'NASA/JPL-Caltech — Mars Perseverance Rover, 3D Model (rover model in the game, unchanged)', url: 'https://science.nasa.gov/resource/mars-perseverance-rover-3d-model/' },
     { rotulo: 'USGS Astrogeology — Mars 2020 TRN HiRISE DTM mosaic 1 m, CC0 (terrain, 8 km, 4× vertical)', url: 'https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_hirise_dtm_mosaic' },
     { rotulo: 'NASA/JPL-Caltech/LANL/CNES — SuperCam wind recording, sol 4 (26 s excerpt, volume normalized, looped)', url: 'https://www.nasa.gov/sounds-from-beyond/' },

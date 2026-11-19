@@ -152,3 +152,11 @@ Pedido do Rogenrique: deixar claro o objetivo de cada missão e o que é a parti
 - Limites (50 de radiação, 150 de O₂) são de jogo, em `METAS`. Com abrigo nas tempestades e 3 escudos dá para cumprir tudo. Sem abrigo, a radiação termina perto de 94 e a meta falha.
 - Dados reais usados (todos já com fonte no debrief): 8.100 µGy em 20/05/2024 (NASA 2024), cerca de 0,21 mGy/dia (Hassler et al. 2014), MOXIE 122 g de O₂ em 2021–2023 (NASA 2023), pousos em ago/2012 e fev/2021.
 - Sem dado real carregado (calendário simulado), a meta da tempestade fica "sem dado real" e sai da contagem.
+
+## Textura real do chão de Jezero (19/11/2026)
+
+- Decisão: o chão da missão Perseverance usa o ortomosaico HiRISE da USGS (Mars 2020 TRN, 25 cm/px), recortado na janela de 8 km do relevo e reduzido a 2048 px (cerca de 4 m/px). A imagem é cinza e normalizada, e a cor vem da paleta da missão, pela cor do vértice.
+- Quebra a regra antiga "nenhuma imagem externa": ela vale só para o solo gerado. A Curiosity continua com o solo gerado.
+- Fonte e licença: a página de dados da USGS marca CC0; a página do produto pede citar os autores. Crédito incluído na lista de fontes.
+- Script: `scripts/relevo/ortho_recorte.py` (lê só a janela por HTTP Range; o arquivo completo tem 6,9 GB).
+- Limite: de perto, o detalhe ainda é o grão gerado, porque a imagem tem 4 m por pixel.

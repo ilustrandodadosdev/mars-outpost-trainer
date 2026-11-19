@@ -172,9 +172,21 @@ if (relevo) {
 terrenoGeo.setAttribute('color', new THREE.Float32BufferAttribute(cores, 3));
 const solo = criarTexturasSolo(renderer, CELULAR);
 for (const tx of [solo.map, solo.normalMap]) tx.repeat.set(48, 48);   // um ladrilho = ~170 m
+// Perseverance: o chão usa o ortomosaico HiRISE real da janela de 8 km (USGS, cinza normalizado, tingido pela cor do vértice).
+// Se não carregar, fica o solo gerado, como antes.
+let mapaTerreno = solo.map;
+if (relevo && MISSAO_ID === 'perseverance') {
+  try {
+    const foto = await new THREE.TextureLoader().loadAsync('assets/relevo/jezero_tex.jpg');
+    foto.colorSpace = THREE.SRGBColorSpace;
+    foto.anisotropy = solo.map.anisotropy;
+    foto.wrapS = foto.wrapT = THREE.ClampToEdgeWrapping;
+    mapaTerreno = foto;
+  } catch (e) { console.warn('ortomosaico de Jezero não carregou; mantendo o solo gerado', e); }
+}
 const terreno = new THREE.Mesh(terrenoGeo, new THREE.MeshStandardMaterial({
   vertexColors: true, flatShading: !relevo, roughness: 0.95,
-  map: solo.map, normalMap: solo.normalMap, normalScale: new THREE.Vector2(0.9, 0.9),
+  map: mapaTerreno, normalMap: solo.normalMap, normalScale: new THREE.Vector2(0.9, 0.9),
 }));
 terreno.receiveShadow = true;
 scene.add(terreno);

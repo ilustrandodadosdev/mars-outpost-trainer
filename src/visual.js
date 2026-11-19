@@ -1,5 +1,5 @@
 // Mars Outpost Trainer (NASA Space Apps 2026). Code written with AI assistance (Claude, Anthropic) and reviewed by the team.
-// Céu e solo da versão realista. Tudo é gerado no navegador: nenhuma imagem externa.
+// Céu e solo da versão realista. O solo é gerado no navegador; só a missão Perseverance usa uma imagem externa (ortomosaico HiRISE da USGS, em assets/relevo/jezero_tex.jpg), decisão registrada no IDEIA.md.
 import * as THREE from 'three';
 
 // Cores do céu de Marte. De dia o céu é caramelo, por causa da poeira em suspensão.
